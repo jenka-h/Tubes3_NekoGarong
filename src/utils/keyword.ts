@@ -95,26 +95,29 @@ function cleanAccent(str: string) {
     return str.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
 }
 
+function searchLookalike(str: string) {
+    let result = str;
+    Object.keys(lookalike).forEach(key => {
+        if (lookalike[key as keyof typeof lookalike].findIndex((v) => v == str[i]) != -1) {
+            result = key;
+        }
+    });
+
+    Object.keys(otherLookalike).forEach(key => {
+        if (otherLookalike[key as keyof typeof otherLookalike].findIndex((v) => v == str[i]) != -1) {
+            result = key;
+        }
+    });
+    return result;
+}
+
 export function normalizeString(str: string) {
     let cleanedString = cleanAccent(str);
     let charArray = Array.from(cleanedString);
     let normalizedStr = "";
 
     for (let i = 0; i < charArray.length; i++) {
-        let currentChar = charArray[i];
-        Object.keys(lookalike).forEach(key => {
-            if (lookalike[key as keyof typeof lookalike].findIndex((v) => v == charArray[i]) != -1) {
-                currentChar = key;
-            }
-        });
-
-        Object.keys(otherLookalike).forEach(key => {
-            if (otherLookalike[key as keyof typeof otherLookalike].findIndex((v) => v == charArray[i]) != -1) {
-                currentChar = key;
-            }
-        });
-
-        normalizedStr += currentChar;
+        normalizedStr += searchLookalike(charArray[i]);
     }
 
     normalizedStr = normalizedStr.toLowerCase();
