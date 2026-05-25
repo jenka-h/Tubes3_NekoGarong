@@ -29,7 +29,8 @@ export const MatchMethod = {
 
 
 export function match(input: string, method: string): StringMatchResult {
-    input = cleanAccent(input);
+    input = keywordData.normalizeString(input);
+    console.log(input);
     let matchPosition = new Map<string, number[]>();
     if (method == MatchMethod.KMP) {
         keywordData.keywords.forEach((keyword) => {
@@ -132,12 +133,8 @@ class AhoCorasickTrie {
     insert(word: string) {
         let trie: AhoCorasickTrie | undefined = this;
         let n = word.length;
-        for (let i = -1; i < n; i++) {
-            let c: string;
-            if (i == -1) c = '\0';
-            else c = word[i];
-            c = normalizeChar(c);
-
+        for (let i = 0; i < n; i++) {
+            let c = word[i];
             let next = trie?.next.get(c);
             if (next == undefined) {
                 trie?.next.set(c, new AhoCorasickTrie(trie, c));
@@ -168,13 +165,12 @@ class AhoCorasickTrie {
     }
 
     getNext(c: string): AhoCorasickTrie | undefined {
-        c = normalizeChar(c);
         if (this.next.get(c) == undefined) {
             if (this.parent == undefined) {
                 this.next.set(c, this);
             }
             else {
-                this.next?.set(c, this.link?.getNext(c));
+                this.next?.set(c, this.getLink()?.getNext(c));
             }
         }
         return this.next.get(c);
@@ -196,11 +192,15 @@ export function ahoCorasick(input: string, patterns: string[]): Map<string, numb
     for (let i = 0, now: AhoCorasickTrie | undefined = trie; i < input.length; i++) {
         now = now?.getNext(input[i]);
         if (now?.word != undefined) {
-            if (!result.has(now?.word)) {
-                result.set(now?.word, [i]);
-            }
-            else {
-                result.get(now?.word)?.push(i);
+            let temp: AhoCorasickTrie | undefined = now;
+            while (temp?.word != undefined) {
+                if (!result.has(temp?.word)) {
+                    result.set(temp?.word, [i]);
+                }
+                else {
+                    result.get(temp?.word)?.push(i);
+                }
+                temp = temp?.getLink();
             }
         }
     }
@@ -209,22 +209,22 @@ export function ahoCorasick(input: string, patterns: string[]): Map<string, numb
 }
 
 export function rabinKarp(input: string, pattern: string): number[] {
-    const prime = 173;
-    const mod = 524287;
+    const prime = BigInt(173);
+    const mod = BigInt(1e9 + 7);
 
-    let primePow = [1];
+    let primePow = [BigInt(1)];
     for (let i = 1; i < Math.max(input.length, pattern.length); i++) {
         primePow.push(primePow[i - 1] * prime % mod);
     }
 
-    let inputHash = [0];
+    let inputHash = [BigInt(0)];
     for (let i = 0; i < input.length; i++) {
-        inputHash.push(inputHash[i] + input.charCodeAt(i) * primePow[i] % mod);
+        inputHash.push(inputHash[i] + BigInt(input.charCodeAt(i)) * primePow[i] % mod);
     }
 
-    let patternHash = 0;
+    let patternHash = BigInt(0);
     for (let i = 0; i < pattern.length; i++) {
-        patternHash = patternHash + pattern.charCodeAt(i) * primePow[i] % mod;
+        patternHash = patternHash + BigInt(pattern.charCodeAt(i)) * primePow[i] % mod;
     }
 
     let result: number[] = [];
@@ -235,15 +235,6 @@ export function rabinKarp(input: string, pattern: string): number[] {
         }
     }
     return result;
-}
-
-function cleanAccent(str: string) {
-    return str.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-}
-
-function normalizeChar(str: string) {
-    str = cleanAccent(str)
-    return str;
 }
 
 function isCharEqual(char1: string, char2: string): boolean {
