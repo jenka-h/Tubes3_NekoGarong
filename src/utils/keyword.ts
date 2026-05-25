@@ -76,10 +76,12 @@ export const otherLookalike = {
     "m": [],
     "n": [],
     "o": [],
+    "O": ["0"],
     "p": [],
     "q": [],
     "r": [],
     "s": [],
+    "S": ["5"],
     "t": [],
     "u": [],
     "v": [],
@@ -88,3 +90,33 @@ export const otherLookalike = {
     "y": [],
     "z": []
 };
+
+function cleanAccent(str: string) {
+    return str.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+}
+
+export function normalizeString(str: string) {
+    let cleanedString = cleanAccent(str);
+    let charArray = Array.from(cleanedString);
+    let normalizedStr = "";
+
+    for (let i = 0; i < charArray.length; i++) {
+        let currentChar = charArray[i];
+        Object.keys(lookalike).forEach(key => {
+            if (lookalike[key as keyof typeof lookalike].findIndex((v) => v == charArray[i]) != -1) {
+                currentChar = key;
+            }
+        });
+
+        Object.keys(otherLookalike).forEach(key => {
+            if (otherLookalike[key as keyof typeof otherLookalike].findIndex((v) => v == charArray[i]) != -1) {
+                currentChar = key;
+            }
+        });
+
+        normalizedStr += currentChar;
+    }
+
+    normalizedStr = normalizedStr.toLowerCase();
+    return normalizedStr;
+}
