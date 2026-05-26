@@ -1,6 +1,6 @@
-import keywordTxt from "./keyword.txt?raw";
+import keywordTxt from "./keyword.txt";
 
-export const keywords = keywordTxt.split(/\r?\n/);
+export const keywords : string[] = keywordTxt.split(/\r?\n/);
 
 export const lookalike = {
     "a": ["𝝰", "a", "ａ", "𝑎", "𝗮", "𝕒", "𝖆", "𝓪", "𝚊", "𝞪", "а", "ɑ", "α", "𝔞", "𝒂", "𝘢", "𝛂", "⍺", "𝒶", "𝙖", "𝜶", "𝛼", "𝐚", "𝖺"],
@@ -20,7 +20,7 @@ export const lookalike = {
     "h": ["Ꮒ", "𝖍", "𝓱", "𝚑", "h", "ｈ", "𝔥", "ℎ", "𝒉", "𝘩", "հ", "𝒽", "𝙝", "𝐡", "𝗁", "𝗵", "һ", "𝕙"],
     "H": ["𝑯", "𝚮", "𝕳", "H", "𝛨", "𝖧", "ℋ", "ℌ", "ℍ", "Ⲏ", "𐋏", "𝜢", "Η", "𝓗", "𝞖", "𝝜", "𝗛", "Н", "𝘏", "ꓧ", "Ｈ", "𝐇", "𝙃", "𝙷", "Ꮋ", "ᕼ", "𝐻"],
     "i": ["𝓲", "𝞲", "ꙇ", "ⅈ", "ｉ", "𝔦", "𝘪", "ӏ", "𝙞", "𝚤", "𝐢", "і", "𝑖", "˛", "𝕚", "𝖎", "Ꭵ", "𝚒", "𑣃", "i", "ɩ", "ɪ", "𝒊", "𝛊", "ⅰ", "ı", "𝒾", "𝜾", "⍳", "𝜄", "ꭵ", "𝗂", "𝝸", "ℹ", "ι", "𝗶", "ͺ"],
-    "I": ["𝚰", "𝘭", "І", "𝖨", "𝐥", "ﺍ", "ﺎ", "𝔩", "ℐ", "ℑ", "𐊊", "Ⲓ", "𐌉", "ℓ", "𝜤", "Ɩ", "𝞘", "Ι", "𝚕", "𝟏", "∣", "ا", "Ｉ", "𝗅", "𝕀", "1", "𝙄", "𝓁", "𐌠", "𝐼", "𞸀", "𞺀", "׀", "𝑰", "ǀ", "Ӏ", "ᛁ", "𝟭", "𝕴", "I", "ߊ", "ｌ", "𝛪", "ⵏ", "𝝞", "𝕝", "𝟣", "ו", "𞣇", "𝙡", "𝓘", "𝗜", "𝟙", "𝑙", "ן", "Ⅰ", "𝘐", "١", "𝒍", "𝖑", "￨", "🯱", "𝐈", "۱", "ꓲ", "𖼨", "𝙸", "𝟷", "𝓵", "|", "ⅼ", "⏽", "𝗹"],
+    "I": ["𝚰", "𝘭", "І", "𝖨", "𝐥", "ﺍ", "ﺎ", "𝔩", "ℐ", "ℑ", "𐊊", "Ⲓ", "𐌉", "ℓ", "𝜤", "Ɩ", "𝞘", "Ι", "𝚕", "𝟏", "∣", "ا", "Ｉ", "𝗅", "𝕀", "1", "𝙄", "𝓁", "𐌠", "𝐼", "𞸀", "𞺀", "׀", "𝑰", "ǀ", "Ӏ", "ᛁ", "𝟭", "𝕴", "I", "ߊ", "ｌ", "𝛪", "ⵏ", "𝝞", "𝕝", "𝟣", "ו", "𞣇", "𝙡", "𝓘", "𝗜", "𝟙", "𝑙", "ן", "Ⅰ", "𝘐", "١", "𝒍", "𝖑", "￨", "🯱", "𝐈", "l", "۱", "ꓲ", "𖼨", "𝙸", "𝟷", "𝓵", "|", "ⅼ", "⏽", "𝗹"],
     "j": ["𝖏", "𝓳", "𝚓", "ⅉ", "𝔧", "j", "ｊ", "𝒋", "𝘫", "𝒿", "𝙟", "ϳ", "𝐣", "𝗃", "ј", "𝑗", "𝗷", "𝕛"],
     "J": ["𝔍", "𝑱", "𝘑", "Ј", "J", "Ｊ", "𝒥", "𝙅", "Ꭻ", "ᒍ", "𝐉", "𝖩", "Ʝ", "𝐽", "𝗝", "𝕁", "ꓙ", "𝕵", "𝓙", "𝙹", "Ϳ"],
     "k": ["𝖐", "𝓴", "𝚔", "𝔨", "k", "𝒌", "𝘬", "𝓀", "𝙠", "𝐤", "𝗄", "𝑘", "𝗸", "𝕜"],
@@ -112,11 +112,35 @@ export const otherLookalike = {
     "Z": []
 };
 
-function cleanAccent(str: string) {
+export const normalCharMap: { [k: string]: string[] } = {};
+
+Object.keys(lookalike).forEach(key => {
+    lookalike[key as keyof typeof lookalike].forEach(value => {
+        let mapKey = value.toLowerCase() as keyof typeof normalCharMap;
+        normalCharMap[mapKey].push(key);
+    });
+    otherLookalike[key as keyof typeof otherLookalike].forEach(value => {
+        let mapKey = value.toLowerCase() as keyof typeof normalCharMap;
+        normalCharMap[mapKey].push(key);
+    });
+});
+
+export function isCharEqual(char1: string, char2: string): boolean {
+    if (normalCharMap[char1] == undefined || normalCharMap[char2] == undefined) {
+        return char1 == char2;
+    }
+    else {
+        let isEqual = false;
+        normalCharMap[char1].findIndex(v1 => normalCharMap[char2].findIndex(v2 => v1 == v2) != -1);
+        return isEqual;
+    }
+}
+
+export function cleanAccent(str: string) {
     return str.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
 }
 
-function searchLookalike(char: string) {
+export function searchLookalike(char: string) {
     let result = char;
     Object.keys(lookalike).forEach(key => {
         if (lookalike[key as keyof typeof lookalike].findIndex((v) => v == char) != -1) {
