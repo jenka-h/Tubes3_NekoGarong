@@ -57,20 +57,20 @@ function knuthMorrisPratt(input: string, pattern: string): number[] {
     // Compute border function
     let borderFunction = [0];
     for (let i = 1, j = 0; i < pattern.length; i++) {
-        while (j > 0 && !isCharEqual(pattern[i], pattern.charAt(j))) {
+        while (j > 0 && pattern[i] != pattern[j]) {
             j = borderFunction[j - 1];
         }
-        if (isCharEqual(pattern[i], pattern.charAt(j))) j++;
+        if (pattern[i] == pattern[j]) j++;
         borderFunction.push(j);
     }
 
     // Check all occurence
     let result = [];
     for (let i = 0, j = 0; i < input.length; i++) {
-        if (j > 0 && !isCharEqual(input[i], pattern.charAt(j))) {
+        if (j > 0 && input[i] != pattern[j]) {
             j = borderFunction[j - 1];
         }
-        if (isCharEqual(input[i], pattern.charAt(j))) j++;
+        if (input[i] == pattern[j]) j++;
         if (j == pattern.length) {
             j = borderFunction[j - 1];
             result.push(i - pattern.length + 1);
@@ -90,13 +90,13 @@ function boyerMoore(input: string, pattern: string): number[] {
     while (offset <= input.length - pattern.length) {
         let i = pattern.length - 1;
 
-        while (i >= 0 && isCharEqual(input.charAt(offset + i), pattern[i])) {
+        while (i >= 0 && input[offset + i] == pattern[i]) {
             i--;
         }
 
         if (i < 0) {
             result.push(offset);
-            let j = lastOccurence.get(input.charAt(offset + i));
+            let j = lastOccurence.get(input[offset + i]);
             if (j != undefined) {
                 offset += (offset + pattern.length < input.length) ? pattern.length - j : 1;
             }
@@ -105,7 +105,7 @@ function boyerMoore(input: string, pattern: string): number[] {
             }
         }
         else {
-            let j = lastOccurence.get(input.charAt(offset + i));
+            let j = lastOccurence.get(input[offset + i]);
             if (j != undefined) {
                 offset += Math.max(1, i - j);
             }
@@ -235,10 +235,6 @@ function rabinKarp(input: string, pattern: string): number[] {
         }
     }
     return result;
-}
-
-function isCharEqual(char1: string, char2: string): boolean {
-    return char1 == char2;
 }
 
 export function fuzzyMacthing(input: string): StringMatchResult {
