@@ -4,16 +4,20 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "vite",
-    "build": "tsc && vite build",
-    "preview": "vite preview"
+    "build": "webpack --config webpack.config.js",
+    "watch": "webpack --config webpack.config.js --watch"
   },
   "devDependencies": {
     "@crxjs/vite-plugin": "^2.4.0",
+    "@types/chrome": "^0.1.42",
     "@types/node": "^25.7.0",
     "chrome-types": "^0.1.427",
+    "copy-webpack-plugin": "^14.0.0",
+    "ts-loader": "^9.5.7",
     "typescript": "~6.0.2",
-    "vite": "^8.0.12"
+    "vite": "^8.0.12",
+    "webpack": "^5.107.2",
+    "webpack-cli": "^7.0.2"
   },
   "dependencies": {
     "@types/node": "^25.7.0",

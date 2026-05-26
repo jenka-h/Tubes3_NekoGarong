@@ -1,0 +1,22 @@
+{
+  "manifest_version": 3,
+  "name": "Judol Detector",
+  "version": "1.0.0",
+  "description": "Pembasmian judol >:)",
+  "permissions": ["storage", "tabs"],
+  "background": {
+    "service_worker": "background.js",
+    "type": "module"
+  },
+
+  "action": {
+    "search_judol": "./src/main.ts"
+  },
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["content.js"],
+      "run_at": "document_idle"
+    }
+  ]
+}
