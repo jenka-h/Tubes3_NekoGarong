@@ -24,13 +24,13 @@ export const MatchMethod = {
     KMP: "Knuth-Morris-Pratt",
     BM: "Boyer-Moore",
     AC: "Aho-Corasick",
-    RK: "Rabin-Karp"
+    RK: "Rabin-Karp",
+    LD: "Levenshtein Distance"  
 };
 
 
-export function match(input: string, method: string): StringMatchResult {
+export function exactMatching(input: string, method: string): StringMatchResult {
     input = keywordData.normalizeString(input);
-    console.log(input);
     let matchPosition = new Map<string, number[]>();
     if (method == MatchMethod.KMP) {
         keywordData.keywords.forEach((keyword) => {
@@ -53,7 +53,7 @@ export function match(input: string, method: string): StringMatchResult {
     return new StringMatchResult(method, input, matchPosition);
 }
 
-export function knuthMorrisPratt(input: string, pattern: string): number[] {
+function knuthMorrisPratt(input: string, pattern: string): number[] {
     // Compute border function
     let borderFunction = [0];
     for (let i = 1, j = 0; i < pattern.length; i++) {
@@ -79,7 +79,7 @@ export function knuthMorrisPratt(input: string, pattern: string): number[] {
     return result;
 }
 
-export function boyerMoore(input: string, pattern: string): number[] {
+function boyerMoore(input: string, pattern: string): number[] {
     let lastOccurence: Map<string, number> = new Map();
     for (let i = 0; i < pattern.length; i++) {
         lastOccurence.set(pattern[i], i);
@@ -177,7 +177,7 @@ class AhoCorasickTrie {
     }
 };
 
-export function ahoCorasick(input: string, patterns: string[]): Map<string, number[]> {
+function ahoCorasick(input: string, patterns: string[]): Map<string, number[]> {
     let trie = new AhoCorasickTrie();
     let result = new Map<string, number[]>();
 
@@ -208,7 +208,7 @@ export function ahoCorasick(input: string, patterns: string[]): Map<string, numb
     return result;
 }
 
-export function rabinKarp(input: string, pattern: string): number[] {
+function rabinKarp(input: string, pattern: string): number[] {
     const prime = BigInt(173);
     const mod = BigInt(1e9 + 7);
 
@@ -239,4 +239,56 @@ export function rabinKarp(input: string, pattern: string): number[] {
 
 function isCharEqual(char1: string, char2: string): boolean {
     return char1 == char2;
+}
+
+export function fuzzyMacthing(input: string): StringMatchResult {
+    input = keywordData.normalizeString(input);
+    let matchPosition = new Map<string, number[]>();
+    keywordData.keywords.forEach((keyword) => {
+        matchPosition.set(keyword, levenshteinDistance(input, keyword, 0.2));
+    });
+    return new StringMatchResult(MatchMethod.LD, input, matchPosition);
+}
+
+function levenshteinDistance(input: string, pattern: string, errorPecentage: number): number[] {
+    let resultDistance: number[] = [];
+    let maxDistance = Math.round(errorPecentage * pattern.length);
+    for (let a = 0; a < input.length; a++) {
+        let minDistance = maxDistance + 1;
+        for (let b = a + 1; b <= input.length && b <= a + pattern.length + maxDistance; b++) {
+            let substr = input.substring(a, b);
+            let distance: number[][] = [];
+            for (let i = 0; i <= substr.length; i++) {
+                distance.push([]);
+                for (let j = 0; j <= pattern.length; j++) {
+                    if (i == 0) {
+                        distance[i].push(j);
+                    }
+                    else if (j == 0) {
+                        distance[i].push(i);
+                    }
+                    else if (substr[i - 1] == pattern[j - 1]) {
+                        distance[i].push(distance[i - 1][j - 1]);
+                    }
+                    else {
+                        distance[i].push(1 + Math.min(distance[i - 1][j], distance[i][j - 1], distance[i - 1][j - 1]))
+                    }
+                }
+            }
+            if (distance[substr.length][pattern.length] <= maxDistance) {
+                minDistance = Math.min(minDistance, distance[substr.length][pattern.length]);
+            }
+        }
+        resultDistance.push(minDistance);
+    }
+
+    let result: number[] = [];
+    for (let i = 0; i < resultDistance.length; i++) {
+        if (resultDistance[i] > maxDistance) continue;
+        let insertIndex = true;
+        if (i > 0 && resultDistance[i] > resultDistance[i - 1]) insertIndex = false;
+        if (i < resultDistance.length - 1 && resultDistance[i] > resultDistance[i + 1]) insertIndex = false;
+        if (insertIndex) result.push(i);
+    }
+    return result;
 }
