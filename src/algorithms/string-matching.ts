@@ -24,7 +24,8 @@ export const MatchMethod = {
     KMP: "Knuth-Morris-Pratt",
     BM: "Boyer-Moore",
     AC: "Aho-Corasick",
-    RK: "Rabin-Karp"
+    RK: "Rabin-Karp",
+    RX: "Regex"
 };
 
 
@@ -49,6 +50,9 @@ export function match(input: string, method: string): StringMatchResult {
         keywordData.keywords.forEach((keyword) => {
             matchPosition.set(keyword, rabinKarp(input, keyword));
         });
+    }
+    else if (method == MatchMethod.RX) {
+        matchPosition = regexMatch(input);
     }
     return new StringMatchResult(method, input, matchPosition);
 }
@@ -234,6 +238,30 @@ export function rabinKarp(input: string, pattern: string): number[] {
             result.push(i);
         }
     }
+    return result;
+}
+
+function regexMatch(input: string): Map<string, number[]> {
+
+    const regex = /\b[A-Z]{2,}[0-9]{2,3}\b/g;
+
+    let result = new Map<string, number[]>();
+
+    let match;
+
+    while ((match = regex.exec(input)) !== null) {
+
+        const keyword = match[0];
+        const start = match.index;
+
+        if (!result.has(keyword)) {
+            result.set(keyword, [start]);
+        }
+        else {
+            result.get(keyword)?.push(start);
+        }
+    }
+
     return result;
 }
 
