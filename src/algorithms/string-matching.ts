@@ -1,52 +1,27 @@
-import * as keywordData from "../utils/keyword";
-
-class StringMatchResult {
-    method: string;
-    input: string;
-    matchPosition: Map<string, number[]>;
-
-    constructor(method: string, input: string, matchPosition: Map<string, number[]>) {
-        this.method = method;
-        this.input = input;
-        this.matchPosition = matchPosition;
-    }
-
-    totalMatch(): number {
-        let count = 0;
-        this.matchPosition.forEach((v) => {
-            count += v.length;
-        })
-        return count;
-    }
-}
-
-export const MatchMethod = {
-    KMP: "Knuth-Morris-Pratt",
-    BM: "Boyer-Moore",
-    AC: "Aho-Corasick",
-    RK: "Rabin-Karp",
-    LD: "Levenshtein Distance"  
-};
-
+import * as keywordUtils from "../utils/keyword";
+import { StringMatchResult, MatchMethod } from "./string-match-result"
 
 export function exactMatching(input: string, method: string): StringMatchResult {
-    input = keywordData.normalizeString(input);
     let matchPosition = new Map<string, number[]>();
     if (method == MatchMethod.KMP) {
-        keywordData.keywords.forEach((keyword) => {
+        input = keywordUtils.cleanAccent(input);
+        keywordUtils.keywords.forEach((keyword) => {
             matchPosition.set(keyword, knuthMorrisPratt(input, keyword));
         });
     }
     else if (method == MatchMethod.BM) {
-        keywordData.keywords.forEach((keyword) => {
+        input = keywordUtils.normalizeString(input);
+        keywordUtils.keywords.forEach((keyword) => {
             matchPosition.set(keyword, boyerMoore(input, keyword));
         });
     }
     else if (method == MatchMethod.AC) {
-        matchPosition = ahoCorasick(input, keywordData.keywords);
+        input = keywordUtils.normalizeString(input);
+        matchPosition = ahoCorasick(input, keywordUtils.keywords);
     }
     else if (method == MatchMethod.RK) {
-        keywordData.keywords.forEach((keyword) => {
+        input = keywordUtils.normalizeString(input);
+        keywordUtils.keywords.forEach((keyword) => {
             matchPosition.set(keyword, rabinKarp(input, keyword));
         });
     }
@@ -70,7 +45,7 @@ function knuthMorrisPratt(input: string, pattern: string): number[] {
         if (j > 0 && input[i] != pattern[j]) {
             j = borderFunction[j - 1];
         }
-        if (input[i] == pattern[j]) j++;
+        if (keywordUtils.isCharEqual(input[i], pattern[j])) j++;
         if (j == pattern.length) {
             j = borderFunction[j - 1];
             result.push(i - pattern.length + 1);
@@ -185,7 +160,7 @@ function ahoCorasick(input: string, patterns: string[]): Map<string, number[]> {
         trie.insert(patterns[i]);
     }
 
-    keywordData.keywords.forEach((keyword) => {
+    keywordUtils.keywords.forEach((keyword) => {
         result.set(keyword, []);
     });
 
@@ -238,9 +213,9 @@ function rabinKarp(input: string, pattern: string): number[] {
 }
 
 export function fuzzyMacthing(input: string): StringMatchResult {
-    input = keywordData.normalizeString(input);
+    input = keywordUtils.normalizeString(input);
     let matchPosition = new Map<string, number[]>();
-    keywordData.keywords.forEach((keyword) => {
+    keywordUtils.keywords.forEach((keyword) => {
         matchPosition.set(keyword, levenshteinDistance(input, keyword, 0.2));
     });
     return new StringMatchResult(MatchMethod.LD, input, matchPosition);
