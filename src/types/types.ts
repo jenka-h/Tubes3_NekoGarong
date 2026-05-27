@@ -1,32 +1,56 @@
 // Module that defines TypeScript interfaces for representing text nodes, match occurrences, and match results in the context of string matching algorithms.
 
+import type { StringMatchResult } from "../algorithms/string-match-result";
 
-// Type interface for extractor.ts
+
+// #Type interface for extractor.ts
 export interface TextNodeData {
     node: Text
     originalText: string
 }
 
+// #Interface for message
 
-// Match result statistic and occurence for result matching
+export type MessageType =
+    | "scan"
+    | "getStats"
+    | "toggleBlur";
 
-// A temporary type
+export interface Message {
+    type: MessageType;
+    payload?: any;
+}
+
+
+// #Match result statistic and occurence for result matching
+
+// [Statistics] ===========
+// Concat all algorithm
+export interface ScanStatistics {
+    totalMatches: number;
+    totalExecTime: number; // This can be delete and counted from algorithm results, just for efficiency
+    algorithmResults: AlgorithmResult[];
+}
 
 // Gather each algorithm result 
-// [This can be use for PopUpStatistics]
 export interface AlgorithmResult {
     algorithm: string;
-    found: Map<string, number[]>; // Pos so it can be highlighted
+    found: Map<string, number[]>; 
     executionTime: number;
     comparisonCount: number;
 }
 
-// To gather position of an occurence
-export interface HoverResult { // There should be a parser per element (?)
-    keyword: string;
-    algorithm: string;
-    occurrence: number;
+// [Hover] ===========
+// Scan per element, for easier highlighting
+export class ElementMatchResult {
+
+    node: Text;
+    result: StringMatchResult;
     execTime: number;
-    startPos: number;
-    endPos: number;
+
+    constructor(node: Text, result: StringMatchResult, time: number = 0) {
+        this.node = node;
+        this.result = result;
+        this.execTime = time;
+    }
 }
