@@ -16,7 +16,7 @@ export function createHover(): HTMLDivElement {
             background: #1a1a2e;
             border: 1px solid #e94560;
             border-radius: 10px;
-            padding: 20px 24px 24px 24px;
+            padding: 20px 24px 26px 24px;
             width: 200px;
             box-shadow: 0 20px 50px -10px rgba(0,0,0,0.5);
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;

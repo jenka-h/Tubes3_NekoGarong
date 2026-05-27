@@ -54,3 +54,10 @@ export class ElementMatchResult {
         this.execTime = time;
     }
 }
+
+// #Interface for UI -- kyknya susah kalau mau akalin, ts cheat code
+export interface Range {
+    start: number;
+    end: number;
+    keyword: string;
+}
