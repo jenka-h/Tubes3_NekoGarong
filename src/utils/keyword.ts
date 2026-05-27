@@ -117,10 +117,16 @@ export const normalCharMap: { [k: string]: string[] } = {};
 Object.keys(lookalike).forEach(key => {
     lookalike[key as keyof typeof lookalike].forEach(value => {
         let mapKey = value.toLowerCase() as keyof typeof normalCharMap;
+        if (!normalCharMap[mapKey]) {
+            normalCharMap[mapKey] = [];
+        }
         normalCharMap[mapKey].push(key);
     });
     otherLookalike[key as keyof typeof otherLookalike].forEach(value => {
         let mapKey = value.toLowerCase() as keyof typeof normalCharMap;
+        if (!normalCharMap[mapKey]) {
+            normalCharMap[mapKey] = [];
+        }
         normalCharMap[mapKey].push(key);
     });
 });
