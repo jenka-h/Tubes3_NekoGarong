@@ -1,3 +1,5 @@
+// PLEASE FIX THIS, I AM STILL UNSURE HOW TO USE THIS
+
 /**
  * Service worker for the background script of the Judol Detector extension.
  * This script listens for events and performs background tasks for the extension.
@@ -7,7 +9,6 @@
 
 // NOTE: Check again what kind of state are we handling.
 // For now: handle init + message passing
-
 // Init
 chrome.runtime.onInstalled.addListener(() => {
     console.log('Judol Detector extension installed and background service worker registered.');
