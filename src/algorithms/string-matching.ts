@@ -25,7 +25,7 @@ export function exactMatching(input: string, method: string): StringMatchResult 
             matchPosition.set(keyword, rabinKarp(input, keyword));
         });
     }
-    else if (method == MatchMethod.RX) {
+    else if (method == MatchMethod.RGX) {
         matchPosition = regexMatch(input);
     }
     return new StringMatchResult(method, input, matchPosition);
@@ -217,7 +217,7 @@ function rabinKarp(input: string, pattern: string): number[] {
 
 function regexMatch(input: string): Map<string, number[]> {
 
-    const regex = /\b[A-Z]{2,}[0-9]{2,3}\b/g;
+    const regex = /\b[A-Z]{2,}[0-9]{2,3}\b/gi; // only handle 2 - 3 number after a word, JENKA123 should still be detected, despite not in keyword 
 
     let result = new Map<string, number[]>();
 

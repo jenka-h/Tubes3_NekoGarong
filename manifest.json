@@ -3,14 +3,14 @@
   "name": "Judol Detector",
   "version": "1.0.0",
   "description": "Pembasmian judol >:)",
-  "permissions": ["storage", "tabs"],
+  "permissions": ["storage", "tabs", "activeTab"],
   "background": {
     "service_worker": "background.js",
     "type": "module"
   },
 
   "action": {
-    "search_judol": "./src/main.ts"
+    "default_popup": "./src/popup.html" 
   },
   "content_scripts": [
     {
