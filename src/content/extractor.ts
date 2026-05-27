@@ -20,7 +20,10 @@ export function extractTextNodes(): TextNodeData[] {
                 const forbiddenTags = [
                     "SCRIPT",
                     "STYLE",
-                    "NOSCRIPT"
+                    "NOSCRIPT",
+                    "TEXTAREA",
+                    "INPUT",
+                    "CODE"
                 ];
 
                 // Reject text nodes that are children of forbidden tags
