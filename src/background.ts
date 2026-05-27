@@ -14,11 +14,7 @@ chrome.runtime.onInstalled.addListener(() => {
 }); 
 
 // Pipline: background -> content script -> popup
-chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-    // Handle scan req
-    if (message.type !== 'scan') {
-        return;
-    }
+chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
 
     // Get the active tab
     chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
@@ -41,7 +37,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     return true; // Keep channel open for async response
 });
 
-// Optional: Listen for action icon clicks (if needed)
+// Optional: Listen for action icon clicks (???????????)
 chrome.action.onClicked.addListener((tab) => {
     console.log(`[Background] Action icon clicked on tab: ${tab.id}`);
 });
