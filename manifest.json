@@ -10,7 +10,6 @@
   },
 
   "action": {
-    "default_popup": "./src/popup.html" 
   },
   "content_scripts": [
     {
