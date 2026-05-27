@@ -1,6 +1,6 @@
-import keywordTxt from "./keyword.txt?raw";
+import keywordTxt from "./keyword.txt";
 
-export const keywords = keywordTxt.split(/\r?\n/);
+export const keywords : string[] = keywordTxt.split(/\r?\n/);
 
 export const lookalike = {
     "a": ["𝝰", "a", "ａ", "𝑎", "𝗮", "𝕒", "𝖆", "𝓪", "𝚊", "𝞪", "а", "ɑ", "α", "𝔞", "𝒂", "𝘢", "𝛂", "⍺", "𝒶", "𝙖", "𝜶", "𝛼", "𝐚", "𝖺"],
@@ -59,53 +59,102 @@ export const lookalike = {
 
 export const otherLookalike = {
     "a": ["ɐ", "ɒ"],
-    "A": ["4", "₳", "∀"],
+    "A": ["4", "₳", "∀", "Δ"],
     "b": [],
     "B": ["₿", "β", "ϐ"],
-    "c": ["©", "ɔ", "ↄ"],
-    "C": ["℃", "₡", "₢", "₵", "€", "∁", "Ↄ", "ↅ"],
+    "c": ["ς", "©", "ɔ", "ↄ"],
+    "C": ["℃", "₡", "₢", "₵", "€", "∁", "Ↄ", "ↅ", "ζ", "Ϛ", "ϛ"],
     "d": [],
-    "e": [],
-    "f": [],
-    "g": [],
+    "D": [],
+    "e": ["ϵ", "ε"],
+    "E": ["Ξ", "ξ", "Σ"],
+    "f": ["ϝ"],
+    "F": ["Ϝ"],
+    "g": ["ϱ"],
+    "G": [],
     "h": [],
+    "H": [],
     "i": [],
+    "I": [],
     "j": [],
+    "J": [],
     "k": [],
+    "K": ["κ", "Ϗ", "ϗ", "ϰ"],
     "l": [],
+    "L": [],
     "m": [],
-    "n": [],
+    "M": ["Ϻ", "ϻ"],
+    "n": ["η", "Π", "π"],
+    "N": ["Ͷ", "ͷ"],
     "o": [],
-    "O": ["0"],
-    "p": [],
+    "O": ["0", "δ", "Θ", "θ", "Φ", "φ", "Ω", "ϴ", "Ϙ", "ϙ"],
+    "p": ["Ϸ", "ϸ", "ϼ"],
+    "P": [],
     "q": [],
-    "r": [],
+    "Q": [],
+    "r": ["Γ"],
+    "R": [],
     "s": [],
     "S": ["5"],
     "t": [],
-    "u": [],
+    "T": ["τ", "Ͳ", "ͳ"],
+    "u": ["μ"],
+    "U": [],
     "v": [],
-    "w": [],
-    "x": [],
-    "y": [],
-    "z": []
+    "V": ["ϑ"],
+    "w": ["ω", "ϖ"],
+    "W": [],
+    "x": ["χ"],
+    "X": [],
+    "y": ["ϕ"],
+    "Y": ["Ψ", "ψ", "ϒ", "ϔ", "ϓ"],
+    "z": [],
+    "Z": []
 };
 
-function cleanAccent(str: string) {
+export const normalCharMap: { [k: string]: string[] } = {};
+
+Object.keys(lookalike).forEach(key => {
+    lookalike[key as keyof typeof lookalike].forEach(value => {
+        let mapKey = value.toLowerCase() as keyof typeof normalCharMap;
+        normalCharMap[mapKey].push(key);
+    });
+    otherLookalike[key as keyof typeof otherLookalike].forEach(value => {
+        let mapKey = value.toLowerCase() as keyof typeof normalCharMap;
+        normalCharMap[mapKey].push(key);
+    });
+});
+
+export function isCharEqual(char1: string, char2: string): boolean {
+    if (normalCharMap[char1] == undefined || normalCharMap[char2] == undefined) {
+        return char1 == char2;
+    }
+    else {
+        let isEqual = false;
+        normalCharMap[char1].findIndex(v1 => normalCharMap[char2].findIndex(v2 => v1 == v2) != -1);
+        return isEqual;
+    }
+}
+
+export function cleanAccent(str: string) {
     return str.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
 }
 
-function searchLookalike(str: string) {
-    let result = str;
+export function searchLookalike(char: string) {
+    let result = char;
     Object.keys(lookalike).forEach(key => {
-        if (lookalike[key as keyof typeof lookalike].findIndex((v) => v == str[i]) != -1) {
-            result = key;
+        if (lookalike[key as keyof typeof lookalike].findIndex((v) => v == char) != -1) {
+            if (result == char) {
+                result = key;
+            }
         }
     });
 
     Object.keys(otherLookalike).forEach(key => {
-        if (otherLookalike[key as keyof typeof otherLookalike].findIndex((v) => v == str[i]) != -1) {
-            result = key;
+        if (otherLookalike[key as keyof typeof otherLookalike].findIndex((v) => v == char) != -1) {
+            if (result == char) {
+                result = key;
+            }
         }
     });
     return result;

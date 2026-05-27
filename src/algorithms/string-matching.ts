@@ -1,53 +1,27 @@
-import * as keywordData from "../utils/keyword";
+import * as keywordUtils from "../utils/keyword";
+import { StringMatchResult, MatchMethod } from "./string-match-result"
 
-class StringMatchResult {
-    method: string;
-    input: string;
-    matchPosition: Map<string, number[]>;
-
-    constructor(method: string, input: string, matchPosition: Map<string, number[]>) {
-        this.method = method;
-        this.input = input;
-        this.matchPosition = matchPosition;
-    }
-
-    totalMatch(): number {
-        let count = 0;
-        this.matchPosition.forEach((v) => {
-            count += v.length;
-        })
-        return count;
-    }
-}
-
-export const MatchMethod = {
-    KMP: "Knuth-Morris-Pratt",
-    BM: "Boyer-Moore",
-    AC: "Aho-Corasick",
-    RK: "Rabin-Karp",
-    RX: "Regex"
-};
-
-
-export function match(input: string, method: string): StringMatchResult {
-    input = keywordData.normalizeString(input);
-    console.log(input);
+export function exactMatching(input: string, method: string): StringMatchResult {
     let matchPosition = new Map<string, number[]>();
     if (method == MatchMethod.KMP) {
-        keywordData.keywords.forEach((keyword) => {
+        input = keywordUtils.cleanAccent(input);
+        keywordUtils.keywords.forEach((keyword) => {
             matchPosition.set(keyword, knuthMorrisPratt(input, keyword));
         });
     }
     else if (method == MatchMethod.BM) {
-        keywordData.keywords.forEach((keyword) => {
+        input = keywordUtils.normalizeString(input);
+        keywordUtils.keywords.forEach((keyword) => {
             matchPosition.set(keyword, boyerMoore(input, keyword));
         });
     }
     else if (method == MatchMethod.AC) {
-        matchPosition = ahoCorasick(input, keywordData.keywords);
+        input = keywordUtils.normalizeString(input);
+        matchPosition = ahoCorasick(input, keywordUtils.keywords);
     }
     else if (method == MatchMethod.RK) {
-        keywordData.keywords.forEach((keyword) => {
+        input = keywordUtils.normalizeString(input);
+        keywordUtils.keywords.forEach((keyword) => {
             matchPosition.set(keyword, rabinKarp(input, keyword));
         });
     }
@@ -57,24 +31,24 @@ export function match(input: string, method: string): StringMatchResult {
     return new StringMatchResult(method, input, matchPosition);
 }
 
-export function knuthMorrisPratt(input: string, pattern: string): number[] {
+function knuthMorrisPratt(input: string, pattern: string): number[] {
     // Compute border function
     let borderFunction = [0];
     for (let i = 1, j = 0; i < pattern.length; i++) {
-        while (j > 0 && !isCharEqual(pattern[i], pattern.charAt(j))) {
+        while (j > 0 && pattern[i] != pattern[j]) {
             j = borderFunction[j - 1];
         }
-        if (isCharEqual(pattern[i], pattern.charAt(j))) j++;
+        if (pattern[i] == pattern[j]) j++;
         borderFunction.push(j);
     }
 
     // Check all occurence
     let result = [];
     for (let i = 0, j = 0; i < input.length; i++) {
-        if (j > 0 && !isCharEqual(input[i], pattern.charAt(j))) {
+        if (j > 0 && input[i] != pattern[j]) {
             j = borderFunction[j - 1];
         }
-        if (isCharEqual(input[i], pattern.charAt(j))) j++;
+        if (keywordUtils.isCharEqual(input[i], pattern[j])) j++;
         if (j == pattern.length) {
             j = borderFunction[j - 1];
             result.push(i - pattern.length + 1);
@@ -83,7 +57,7 @@ export function knuthMorrisPratt(input: string, pattern: string): number[] {
     return result;
 }
 
-export function boyerMoore(input: string, pattern: string): number[] {
+function boyerMoore(input: string, pattern: string): number[] {
     let lastOccurence: Map<string, number> = new Map();
     for (let i = 0; i < pattern.length; i++) {
         lastOccurence.set(pattern[i], i);
@@ -94,13 +68,13 @@ export function boyerMoore(input: string, pattern: string): number[] {
     while (offset <= input.length - pattern.length) {
         let i = pattern.length - 1;
 
-        while (i >= 0 && isCharEqual(input.charAt(offset + i), pattern[i])) {
+        while (i >= 0 && input[offset + i] == pattern[i]) {
             i--;
         }
 
         if (i < 0) {
             result.push(offset);
-            let j = lastOccurence.get(input.charAt(offset + i));
+            let j = lastOccurence.get(input[offset + i]);
             if (j != undefined) {
                 offset += (offset + pattern.length < input.length) ? pattern.length - j : 1;
             }
@@ -109,7 +83,7 @@ export function boyerMoore(input: string, pattern: string): number[] {
             }
         }
         else {
-            let j = lastOccurence.get(input.charAt(offset + i));
+            let j = lastOccurence.get(input[offset + i]);
             if (j != undefined) {
                 offset += Math.max(1, i - j);
             }
@@ -181,7 +155,7 @@ class AhoCorasickTrie {
     }
 };
 
-export function ahoCorasick(input: string, patterns: string[]): Map<string, number[]> {
+function ahoCorasick(input: string, patterns: string[]): Map<string, number[]> {
     let trie = new AhoCorasickTrie();
     let result = new Map<string, number[]>();
 
@@ -189,7 +163,7 @@ export function ahoCorasick(input: string, patterns: string[]): Map<string, numb
         trie.insert(patterns[i]);
     }
 
-    keywordData.keywords.forEach((keyword) => {
+    keywordUtils.keywords.forEach((keyword) => {
         result.set(keyword, []);
     });
 
@@ -212,7 +186,7 @@ export function ahoCorasick(input: string, patterns: string[]): Map<string, numb
     return result;
 }
 
-export function rabinKarp(input: string, pattern: string): number[] {
+function rabinKarp(input: string, pattern: string): number[] {
     const prime = BigInt(173);
     const mod = BigInt(1e9 + 7);
 
@@ -265,6 +239,54 @@ function regexMatch(input: string): Map<string, number[]> {
     return result;
 }
 
-function isCharEqual(char1: string, char2: string): boolean {
-    return char1 == char2;
+export function fuzzyMacthing(input: string): StringMatchResult {
+    input = keywordUtils.normalizeString(input);
+    let matchPosition = new Map<string, number[]>();
+    keywordUtils.keywords.forEach((keyword) => {
+        matchPosition.set(keyword, levenshteinDistance(input, keyword, 0.2));
+    });
+    return new StringMatchResult(MatchMethod.LD, input, matchPosition);
+}
+
+function levenshteinDistance(input: string, pattern: string, errorPecentage: number): number[] {
+    let resultDistance: number[] = [];
+    let maxDistance = Math.round(errorPecentage * pattern.length);
+    for (let a = 0; a < input.length; a++) {
+        let minDistance = maxDistance + 1;
+        for (let b = a + 1; b <= input.length && b <= a + pattern.length + maxDistance; b++) {
+            let substr = input.substring(a, b);
+            let distance: number[][] = [];
+            for (let i = 0; i <= substr.length; i++) {
+                distance.push([]);
+                for (let j = 0; j <= pattern.length; j++) {
+                    if (i == 0) {
+                        distance[i].push(j);
+                    }
+                    else if (j == 0) {
+                        distance[i].push(i);
+                    }
+                    else if (substr[i - 1] == pattern[j - 1]) {
+                        distance[i].push(distance[i - 1][j - 1]);
+                    }
+                    else {
+                        distance[i].push(1 + Math.min(distance[i - 1][j], distance[i][j - 1], distance[i - 1][j - 1]))
+                    }
+                }
+            }
+            if (distance[substr.length][pattern.length] <= maxDistance) {
+                minDistance = Math.min(minDistance, distance[substr.length][pattern.length]);
+            }
+        }
+        resultDistance.push(minDistance);
+    }
+
+    let result: number[] = [];
+    for (let i = 0; i < resultDistance.length; i++) {
+        if (resultDistance[i] > maxDistance) continue;
+        let insertIndex = true;
+        if (i > 0 && resultDistance[i] > resultDistance[i - 1]) insertIndex = false;
+        if (i < resultDistance.length - 1 && resultDistance[i] > resultDistance[i + 1]) insertIndex = false;
+        if (insertIndex) result.push(i);
+    }
+    return result;
 }
