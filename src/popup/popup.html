@@ -3,36 +3,63 @@
 <head>
   <meta charset="UTF-8" />
   <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+  <link rel="stylesheet" href="../style.css" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>tubes3-nekogarong</title>
 </head>
 <body>
-  <h1>Judol Detector</h1>
-
-  <div id="stats">
+  <h1> Judol Detector <span id="version"> v1.0.0 </span> </h1>
+  <div id="status">
     Loading...
   </div>
 
-  <div id="total_keywords">
-    Total keywords: 0
-  </div>
+  <div class="container">
 
-  <div id="comparison">
-    Keywords Found Comparison Graph
-  </div>
+    <div class="column" id="column-left">
+      <label for="algorithm">Select algorithm for pattern matching</label>
+      <select name="algorithm" id="algorithm">
+        <option value="kmp">Knuth-Morris-Pratt</option>
+        <option value="bm">Boyer Moore</option>
+      </select>
 
-  <div id="execution_time">
-    Knuth-Morris-Pratt Algorithm execution time: 0 ms<br>
-    Boyer Moore Algorithm execution time: 0 ms<br>
-    RegEx Algorithm execution time: 0 ms<br>
-    Fuzzy Matching execution time: 0 ms
-  </div>
+      <label class="switch" for="blur">
+        <input type="checkbox" name="blur" id="blur">
+        <span class="slider round"></span>
+        <span class="switch-label">Blur detected content</span>
+      </label>
 
-  <div id="match_per_algorithm">
-    Knuth-Morris-Pratt Algorithm matches: 0 ms<br>
-    Boyer Moore Algorithm matches: 0 ms<br>
-    RegEx Algorithm matches: 0 ms<br>
-    Fuzzy Matching matches: 0 ms
+      <button>Scan</button>
+    </div>
+
+    <div class="column" id="column-center">
+      <h2> Algorithm Used </h2>
+      <div class="statistics"> (not run yet) </div>
+      <h2> Total Keywords </h2>
+      <div class="statistics" id="total_keywords">
+        0 keywords found
+      </div>
+
+      <h2> Execution Time </h2>
+      <div class="statistics" id="execution_time">
+        Pattern Matching: 0 ms<br>
+        RegEx Matching: 0 ms<br>
+        Fuzzy Matching: 0 ms
+      </div>
+      
+
+      <h2> Keywords Match </h2>
+      <div class="statistics" id="match">
+        Pattern Matching: 0 keywords<br>
+        RegEx Matching: 0 keywords<br>
+        Fuzzy Matching: 0 keywords
+      </div>
+    </div>
+    
+    <div class="column" id="column-right">
+      <h2> Keywords Found Comparison </h2>
+      <canvas id="keywords-chart"></canvas>
+    </div>
+    
   </div>
 
   <script type="module" src="./popup.ts"></script>
