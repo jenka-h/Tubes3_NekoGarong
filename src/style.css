@@ -134,7 +134,7 @@ button {
 }
 
 select {
-  font-size: 16px;
+  font-size: 15px;
   padding: 5px 10px;
   border-radius: 5px;
   color: var(--text-h);
@@ -408,7 +408,7 @@ select {
 
 .switch-label {
   line-height: 1.1;
-  font-size: 14px;
+  font-size: 15px;
   color: var(--text);
 }
 
