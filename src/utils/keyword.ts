@@ -1,6 +1,6 @@
 import keywordTxt from "./keyword.txt?raw";
 
-export const keywords : string[] = keywordTxt.split(/\r?\n/);
+export const keywords: string[] = keywordTxt.split(/\r?\n/);
 
 export const lookalike = {
     "a": ["𝝰", "a", "ａ", "𝑎", "𝗮", "𝕒", "𝖆", "𝓪", "𝚊", "𝞪", "а", "ɑ", "α", "𝔞", "𝒂", "𝘢", "𝛂", "⍺", "𝒶", "𝙖", "𝜶", "𝛼", "𝐚", "𝖺"],
@@ -58,7 +58,7 @@ export const lookalike = {
 }
 
 export const otherLookalike = {
-    "a": ["ɐ", "ɒ"],
+    "a": ["@", "ɐ", "ɒ"],
     "A": ["4", "₳", "∀", "Δ"],
     "b": [],
     "B": ["₿", "β", "ϐ"],
@@ -95,7 +95,7 @@ export const otherLookalike = {
     "r": ["Γ"],
     "R": [],
     "s": [],
-    "S": ["5"],
+    "S": ["5", "$"],
     "t": [],
     "T": ["τ", "Ͳ", "ͳ"],
     "u": ["μ"],
@@ -136,9 +136,7 @@ export function isCharEqual(char1: string, char2: string): boolean {
         return char1 == char2;
     }
     else {
-        let isEqual = false;
-        normalCharMap[char1].findIndex(v1 => normalCharMap[char2].findIndex(v2 => v1 == v2) != -1);
-        return isEqual;
+        return normalCharMap[char1].findIndex(v1 => normalCharMap[char2].findIndex(v2 => v1.toLowerCase() == v2.toLowerCase()) != -1) != -1;
     }
 }
 
