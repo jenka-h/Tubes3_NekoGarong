@@ -36,18 +36,27 @@ export interface Message {
 
 // [Statistics] ===========
 // Concat all algorithm
-export interface ScanStatistics {
+export class ScanStatistic {
     totalMatches: number;
-    totalExecTime: number; // This can be delete and counted from algorithm results, just for efficiency
-    algorithmResults: AlgorithmResult[];
+    methodResults: Map<string, MethodResult>;
+    topKeywords: { keyword: string; count: number }[];
+
+    constructor(totalMatches: number = 0, methodResults: Map<string, MethodResult> = new Map<string, MethodResult>(), topKeywords: { keyword: string; count: number }[] = []) {
+        this.totalMatches = totalMatches;
+        this.methodResults = methodResults;
+        this.topKeywords = topKeywords;
+    }
 }
 
-// Gather each algorithm result 
-export interface AlgorithmResult {
-    algorithm: string;
-    found: Map<string, number[]>; 
+// Gather each method result 
+export class MethodResult {
     executionTime: number;
     comparisonCount: number;
+    
+    constructor(executionTime: number = 0, comparisonCount: number = 0) {
+        this.executionTime = executionTime;
+        this.comparisonCount = comparisonCount;
+    }
 }
 
 // [Hover] ===========

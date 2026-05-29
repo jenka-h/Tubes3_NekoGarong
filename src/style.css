@@ -441,3 +441,7 @@ select {
 .slider.round:before {
   border-radius: 50%;
 }
+
+#chart-container {
+  height: 300px;
+}

@@ -2,7 +2,7 @@
 import "../style.css";
 import Chart from 'chart.js/auto';
 import type { ChartConfiguration } from "chart.js";
-import { ElementMatchResult } from '../types/types';
+import { ScanStatistic } from '../types/types';
 
 const style = getComputedStyle(document.documentElement);
 const gridColor = style.getPropertyValue("--social-bg").trim();
@@ -13,8 +13,6 @@ const selectAlgorithm = document.getElementById("algorithm") as HTMLSelectElemen
 const canvas = document.getElementById("keywords-chart") as HTMLCanvasElement | null;
 const scanButton = document.getElementById("scan-button");
 const clearButton = document.getElementById("clear-button");
-
-let elementMatches: ElementMatchResult[] = [];
 
 if (status) {
     status.textContent = "Extension ready to use ദ്ദി(• ⩊ •マ";
@@ -54,20 +52,28 @@ const config:ChartConfiguration<"bar", number[], string> = {
                     color: gridColor
                 }
             }
-        }
+        },
+        responsive: true,
+        maintainAspectRatio: false
     }
 };
 
+let keywordsChart: any = null;
 if (canvas) {
-    new Chart(canvas, config);
+    keywordsChart = new Chart(canvas, config);
 }
 
-if (selectAlgorithm) {
-    // idk maybe run the algorithm
-}
+// Load last saved statistic on popup open
+chrome.storage.local.get(['lastStatistic'], (result) => {
+    const saved = result?.lastStatistic;
+    if (!saved) return;
+    const statistic = normalizeStatistic(saved);
+    updateStatistic(statistic);
+});
 
-if (scanButton && selectAlgorithm) {
+if (scanButton && selectAlgorithm && status) {
     scanButton.addEventListener("click", () => {
+        status.textContent = "Loading...";
         chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
             const activeTab = tabs[0];
             if (!activeTab?.id) return;
@@ -84,10 +90,13 @@ if (scanButton && selectAlgorithm) {
                 if (!response) return;
 
                 console.log("Response:", response.success);
-                elementMatches = response.result;
-                console.log("Response:", elementMatches);
+                let statistic: ScanStatistic = response.statistic;
+                statistic = normalizeStatistic(statistic);
+                updateStatistic(statistic);
+                chrome.storage.local.set({ lastStatistic: statistic });
             });
         });
+        status.textContent = "Extension ready to use ദ്ദി(• ⩊ •マ";
     });
 }
 
@@ -102,4 +111,73 @@ if (clearButton) {
             });
         });
     });
+}
+
+function updateStatistic(statistic: ScanStatistic): void {
+    const algUsedEl = document.getElementById('algorithm-used');
+    const totalKeywordsEl = document.getElementById('total-keywords');
+    const executionTimeEl = document.getElementById('execution-time');
+    const matchEl = document.getElementById('match');
+
+    function algCodeToName(code: string): string {
+        switch (code) {
+            case 'KMP': return 'Knuth-Morris-Pratt';
+            case 'BM': return 'Boyer-Moore';
+            case 'AC': return 'Aho-Corasick';
+            case 'RK': return 'Rabin-Karp';
+            case 'RGX': return 'Regex';
+            case 'LD': return 'Levenshtein Distance';
+            default: return code;
+        }
+    }
+
+    const selectedCode = selectAlgorithm ? selectAlgorithm.value : 'KMP';
+    const patternName = algCodeToName(selectedCode);
+    const regexName = algCodeToName('RGX');
+    const fuzzyName = algCodeToName('LD');
+
+    const patternRes = statistic.methodResults.get(patternName);
+    const regexRes = statistic.methodResults.get(regexName);
+    const fuzzyRes = statistic.methodResults.get(fuzzyName);
+
+    if (algUsedEl) algUsedEl.textContent = patternName;
+
+    if (totalKeywordsEl) totalKeywordsEl.textContent = `${statistic.totalMatches} keywords found`;
+
+    const patternTime = patternRes ? patternRes.executionTime.toFixed(2) : '0.00';
+    const regexTime = regexRes ? regexRes.executionTime.toFixed(2) : '0.00';
+    const fuzzyTime = fuzzyRes ? fuzzyRes.executionTime.toFixed(2) : '0.00';
+    if (executionTimeEl) executionTimeEl.innerHTML =
+        `Pattern Matching: ${patternTime} ms<br>RegEx Matching: ${regexTime} ms<br>Fuzzy Matching: ${fuzzyTime} ms`;
+
+    const patternCount = patternRes ? patternRes.comparisonCount : 0;
+    const regexCount = regexRes ? regexRes.comparisonCount : 0;
+    const fuzzyCount = fuzzyRes ? fuzzyRes.comparisonCount : 0;
+    if (matchEl) matchEl.innerHTML =
+        `Pattern Matching: ${patternCount} keywords<br>RegEx Matching: ${regexCount} keywords<br>Fuzzy Matching: ${fuzzyCount} keywords`;
+
+    if (keywordsChart) {
+        if (statistic.topKeywords && statistic.topKeywords.length > 0) {
+            const labels = statistic.topKeywords.map(k => k.keyword);
+            const dataVals = statistic.topKeywords.map(k => k.count);
+            keywordsChart.data.labels = labels;
+            if (keywordsChart.data.datasets && keywordsChart.data.datasets[0]) {
+                keywordsChart.data.datasets[0].data = dataVals;
+            }
+        } else {
+            keywordsChart.data.labels = [];
+            if (keywordsChart.data.datasets && keywordsChart.data.datasets[0]) {
+                keywordsChart.data.datasets[0].data = [];
+            }
+        }
+        keywordsChart.update();
+    }
+}
+
+function normalizeStatistic(raw: any): ScanStatistic {
+    const statistic = raw as ScanStatistic;
+    if (statistic && !(statistic.methodResults instanceof Map)) {
+        statistic.methodResults = new Map(Object.entries(statistic.methodResults || {}));
+    }
+    return statistic;
 }

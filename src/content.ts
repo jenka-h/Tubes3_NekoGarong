@@ -7,7 +7,7 @@
 import { exactMatching, fuzzyMacthing } from './algorithms/string-matching';
 import { MatchMethod, StringMatchResult } from './algorithms/string-match-result';
 import { extractTextNodes } from './content/extractor';
-import type { TextNodeData, Message } from './types/types';
+import { type TextNodeData, type Message, ScanStatistic, MethodResult } from './types/types';
 import { ElementMatchResult } from './types/types';
 import { createHover } from './content/hover';
 import { addMatchToSemanticContainer, attachSemanticListeners} from './content/semantic';
@@ -25,10 +25,14 @@ chrome.runtime.onMessage.addListener((msg: Message, _sender, sendResponse) => {
         if (!hoverPopup) {
             hoverPopup = createHover();
         }
-        runScan(msg.algorithm);
+        const statistic = runScan(msg.algorithm);
+        const methodResultsObj = Object.fromEntries(statistic.methodResults);
         sendResponse({ 
             success: true,
-            result: elementMatches
+            statistic: {
+                ...statistic,
+                methodResults: methodResultsObj
+            }
         });
     }
     else if (msg.type === 'clear') {
@@ -43,32 +47,52 @@ chrome.runtime.onMessage.addListener((msg: Message, _sender, sendResponse) => {
 /**
  * Main Pipeline
  */
-function runScan(methodChoice: string): void {
+function runScan(algorithm: string): ScanStatistic {
     clearHighlights();
     elementMatches = [];
     const textNodes = extractTextNodes();
     semanticMatches.clear();  // Clear old mappings on rescans
 
-    for (const textNode of textNodes) {
-        const resultExact = analyzeTextNode(textNode, methodChoice);
-        const resultRegEx = analyzeTextNode(textNode, "RGX");
-        const resultFuzzy = analyzeTextNode(textNode, "LD");
+    const methods = [algorithm, "RGX", "LD"]
+    let statistic = new ScanStatistic();
+    const keywordCounts: Map<string, number> = new Map();
 
-        const results = [resultExact, resultRegEx, resultFuzzy];
+    for (const method of methods) {
+        const startTime = performance.now();
+        let count = 0;
+        for (const textNode of textNodes) {
+            const result = analyzeTextNode(textNode, method);
 
-        for (const result of results) {
             if (result && result.result.totalMatch() > 0) {
                 const elemMatch = result;
                 elementMatches.push(elemMatch);
+                count += elemMatch.result.totalMatch();
+
+                // accumulate keyword counts for top keywords
+                elemMatch.result.matchPosition.forEach((positions, keyword) => {
+                    const prev = keywordCounts.get(keyword) || 0;
+                    keywordCounts.set(keyword, prev + positions.length);
+                });
 
                 // Add to semantic container (finds semantic parent)
                 addMatchToSemanticContainer(semanticMatches, textNode.node, elemMatch);
             }
         }
+        const execTime = performance.now() - startTime;
+        const methodResult = new MethodResult(execTime, count);
+        statistic.methodResults.set(algCodeToString(method), methodResult);
+        statistic.totalMatches += count;
     }
 
     applyAllHighlights(elementMatches);
     attachSemanticListeners(semanticMatches, hoverPopup);
+    const top = Array.from(keywordCounts.entries())
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 10) // get top 10 keywords
+        .map(([keyword, count]) => ({ keyword, count }));
+    statistic.topKeywords = top;
+
+    return statistic;
 }
 
 // Ini gatau better taruh mana
@@ -77,32 +101,9 @@ function analyzeTextNode(textNode: TextNodeData, methodChoice: string): ElementM
     const { originalText } = textNode;
     if (!originalText.trim()) return null;
 
-    let method: string = "";
-    switch (methodChoice) {
-        case "KMP": 
-            method = MatchMethod.KMP;
-            break;
-        case "BM":
-            method = MatchMethod.BM;
-            break;
-        case "AC":
-            method = MatchMethod.AC;
-            break;
-        case "RK":
-            method = MatchMethod.RK;
-            break;
-        case "RGX":
-            method = MatchMethod.RGX;
-            break;
-        case "LD":
-            method = MatchMethod.LD;
-            break; 
-        default:
-            method = MatchMethod.KMP;
-            break;
-    }
+    const method = algCodeToString(methodChoice);
 
-    let startTime = performance.now();
+    const startTime = performance.now();
     let result: StringMatchResult;
     if (method !== MatchMethod.LD) {
         result = exactMatching(originalText, method);
@@ -117,4 +118,23 @@ function analyzeTextNode(textNode: TextNodeData, methodChoice: string): ElementM
     }
 
     return null;
+}
+
+function algCodeToString(alg: string): string {
+    switch (alg) {
+        case "KMP": 
+            return MatchMethod.KMP;
+        case "BM":
+            return MatchMethod.BM;
+        case "AC":
+            return MatchMethod.AC;
+        case "RK":
+            return MatchMethod.RK;
+        case "RGX":
+            return MatchMethod.RGX;
+        case "LD":
+            return MatchMethod.LD;
+        default:
+            return MatchMethod.KMP;
+    }
 }
