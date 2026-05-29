@@ -40,6 +40,9 @@
     --accent: #65c572;
     --accent-bg: rgba(132, 252, 138, 0.15);
     --accent-border: rgba(132, 252, 170, 0.5);
+    --accent2: #c56565;
+    --accent2-bg: rgba(252, 132, 132, 0.15);
+    --accent2-border: rgba(252, 132, 132, 0.5);
     --social-bg: rgba(47, 48, 58, 0.5);
     --shadow:
       rgba(0, 0, 0, 0.4) 0 10px 15px -3px, rgba(0, 0, 0, 0.25) 0 4px 6px -2px;
@@ -114,12 +117,15 @@ button {
   font-size: 16px;
   padding: 5px 10px;
   border-radius: 5px;
-  color: var(--accent);
-  background: var(--accent-bg);
   border: 2px solid transparent;
   transition: border-color 0.3s;
   margin-bottom: 24px;
 
+}
+
+#scan-button {
+  color: var(--accent);
+  background: var(--accent-bg);
   &:hover {
     border-color: var(--accent-border);
   }
@@ -130,6 +136,22 @@ button {
   &:active {
     color: var(--text-h);
     background: var(--accent);
+  }
+}
+
+#clear-button {
+  color: var(--accent2);
+  background: var(--accent2-bg);
+  &:hover {
+    border-color: var(--accent2-border);
+  }
+  &:focus-visible {
+    outline: 1px solid var(--accent2);
+    outline-offset: 1px;
+  }
+  &:active {
+    color: var(--text-h);
+    background: var(--accent2);
   }
 }
 

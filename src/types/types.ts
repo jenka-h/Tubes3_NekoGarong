@@ -13,11 +13,21 @@ export interface TextNodeData {
 
 export type MessageType =
     | "scan"
+    | "clear"
     | "getStats"
     | "toggleBlur";
 
+export type Algorithm =
+    | "KMP"
+    | "BM"
+    | "AC"
+    | "RK"
+    | "RGX"
+    | "LD";
+
 export interface Message {
     type: MessageType;
+    algorithm: Algorithm;
     payload?: any;
 }
 

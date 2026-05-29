@@ -1,4 +1,4 @@
-import keywordTxt from "./keyword.txt";
+import keywordTxt from "./keyword.txt?raw";
 
 export const keywords : string[] = keywordTxt.split(/\r?\n/);
 

@@ -4,26 +4,28 @@ import { StringMatchResult, MatchMethod } from "./string-match-result"
 export function exactMatching(input: string, method: string): StringMatchResult {
     let matchPosition = new Map<string, number[]>();
     if (method == MatchMethod.KMP) {
-        input = keywordUtils.cleanAccent(input);
+        let inputModified = keywordUtils.cleanAccent(input);
         keywordUtils.keywords.forEach((keyword) => {
-            const x = knuthMorrisPratt(input, keyword);
+            const x = knuthMorrisPratt(inputModified, keyword);
             if (x.length > 0) {
                 matchPosition.set(keyword, x);
             }
         });
     }
     else if (method == MatchMethod.BM) {
-        input = keywordUtils.normalizeString(input);
+        let inputModified = keywordUtils.cleanAccent(input);
+        inputModified = keywordUtils.normalizeString(inputModified);
         keywordUtils.keywords.forEach((keyword) => {
-            const x = boyerMoore(input, keyword);
+            const x = boyerMoore(inputModified, keyword);
             if (x.length > 0) {
                 matchPosition.set(keyword, x);
             }
         });
     }
     else if (method == MatchMethod.AC) {
-        input = keywordUtils.normalizeString(input);
-        const x = ahoCorasick(input, keywordUtils.keywords);
+        let inputModified = keywordUtils.cleanAccent(input);
+        inputModified = keywordUtils.normalizeString(inputModified);
+        const x = ahoCorasick(inputModified, keywordUtils.keywords);
         x.forEach((v, k) => {
             if (v.length > 0) {
                 matchPosition.set(k, v);
@@ -31,9 +33,10 @@ export function exactMatching(input: string, method: string): StringMatchResult 
         });
     }
     else if (method == MatchMethod.RK) {
-        input = keywordUtils.normalizeString(input);
+        let inputModified = keywordUtils.cleanAccent(input);
+        inputModified = keywordUtils.normalizeString(inputModified);
         keywordUtils.keywords.forEach((keyword) => {
-            const x = rabinKarp(input, keyword);
+            const x = rabinKarp(inputModified, keyword);
             if (x.length > 0) {
                 matchPosition.set(keyword, x);
             }

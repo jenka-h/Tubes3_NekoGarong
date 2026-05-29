@@ -18,8 +18,10 @@
     <div class="column" id="column-left">
       <label for="algorithm">Select algorithm for pattern matching</label>
       <select name="algorithm" id="algorithm">
-        <option value="kmp">Knuth-Morris-Pratt</option>
-        <option value="bm">Boyer Moore</option>
+        <option value="KMP">Knuth-Morris-Pratt</option>
+        <option value="BM">Boyer Moore</option>
+        <option value="AC">Aho-Corasick</option>
+        <option value="RK">Rabin Karp</option>
       </select>
 
       <label class="switch" for="blur">
@@ -28,7 +30,8 @@
         <span class="switch-label">Blur detected content</span>
       </label>
 
-      <button>Scan</button>
+      <button id="scan-button">Scan</button>
+      <button id="clear-button">Clear</button>
     </div>
 
     <div class="column" id="column-center">

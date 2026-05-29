@@ -2,14 +2,19 @@
 import "../style.css";
 import Chart from 'chart.js/auto';
 import type { ChartConfiguration } from "chart.js";
+import { ElementMatchResult } from '../types/types';
 
 const style = getComputedStyle(document.documentElement);
-// const accent = style.getPropertyValue("--accent").trim();
+const gridColor = style.getPropertyValue("--social-bg").trim();
 const accentBg = style.getPropertyValue("--accent-bg").trim();
 const accentBorder = style.getPropertyValue("--accent-border").trim();
 const status = document.getElementById("status");
-const selectAlgorithm = document.getElementsByName("algorithm")
+const selectAlgorithm = document.getElementById("algorithm") as HTMLSelectElement | null;;
 const canvas = document.getElementById("keywords-chart") as HTMLCanvasElement | null;
+const scanButton = document.getElementById("scan-button");
+const clearButton = document.getElementById("clear-button");
+
+let elementMatches: ElementMatchResult[] = [];
 
 if (status) {
     status.textContent = "Extension ready to use ദ്ദി(• ⩊ •マ";
@@ -37,6 +42,18 @@ const config:ChartConfiguration<"bar", number[], string> = {
             legend: {
                 display: false
             }
+        },
+        scales: {
+            x: {
+                grid: {
+                    color: gridColor
+                }
+            },
+            y: {
+                grid: {
+                    color: gridColor
+                }
+            }
         }
     }
 };
@@ -47,4 +64,42 @@ if (canvas) {
 
 if (selectAlgorithm) {
     // idk maybe run the algorithm
+}
+
+if (scanButton && selectAlgorithm) {
+    scanButton.addEventListener("click", () => {
+        chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+            const activeTab = tabs[0];
+            if (!activeTab?.id) return;
+
+            chrome.tabs.sendMessage(activeTab.id, {
+                type: "scan",
+                algorithm: selectAlgorithm.value
+            }, (response) => {
+                if (chrome.runtime.lastError) {
+                    console.warn(chrome.runtime.lastError.message);
+                    return;
+                }
+
+                if (!response) return;
+
+                console.log("Response:", response.success);
+                elementMatches = response.result;
+                console.log("Response:", elementMatches);
+            });
+        });
+    });
+}
+
+if (clearButton) {
+    clearButton.addEventListener("click", () => {
+        chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+            const activeTab = tabs[0];
+            if (!activeTab?.id) return;
+
+            chrome.tabs.sendMessage(activeTab.id, { type: "clear" }, (response) => {
+                console.log("Response:", response);
+            });
+        });
+    });
 }
