@@ -48,6 +48,10 @@ export function createHover(): HTMLDivElement {
                     <span class="jv-occurrences">-</span>
                 </div>
                 <div style="display: flex; justify-content: space-between; gap: 8px;">
+                    <span style="color: #888;">Algorithm</span>
+                    <span style="font-family: monospace;" class="jv-algorithm">-</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; gap: 8px;">
                     <span style="color: #888;">Execution Time</span>
                     <span style="font-family: monospace;" class="jv-time">-</span>
                 </div>
@@ -79,32 +83,47 @@ export function moveHover(popup: HTMLElement | null, e: MouseEvent): void {
     }
 }
 
+// bad code alert !! lolol
 export function showElementHover(popup: HTMLElement | null, e: MouseEvent, matches: ElementMatchResult[]): void {
     if (!popup) return;
 
-    const match = matches[0];
-
     const keywordEl = popup.querySelector('.jv-keyword');
     const occEl = popup.querySelector('.jv-occurrences');
+    const algoEl = popup.querySelector('.jv-algorithm');
     const timeEl = popup.querySelector('.jv-time');
     const badgeEl = popup.querySelector('.jv-badge');
 
-    if (match) {
-        const keywords = Array.from(match.result.matchPosition.keys()).join(', ');
-        const occurrences = Array.from(match.result.matchPosition.values()).reduce((sum, pos) => sum + pos.length, 0);
-        if (keywordEl) keywordEl.textContent = keywords || '-';
-        if (occEl) occEl.textContent = String(occurrences);
-        if (timeEl) timeEl.textContent = `${match.execTime.toFixed(2)}ms`;
-        if (badgeEl) badgeEl.textContent = getAlgoCode(match.result.method);
+    if (matches.length > 0) {
+        // Collect all unique algorithms
+        const algorithms = [...new Set(matches.map(m => getAlgoCode(m.result.method)))];
+
+        // Aggregate keywords and total occurrences
+        const keywords = new Set<string>();
+        let totalOccurrences = 0;
+        let totalExecTime = 0;
+
+        for (const match of matches) {
+            totalExecTime += match.execTime;
+            for (const [keyword, positions] of match.result.matchPosition) {
+                keywords.add(keyword);
+                totalOccurrences += positions.length;
+            }
+        }
+
+        if (keywordEl) keywordEl.textContent = [...keywords].join(', ') || '-';
+        if (occEl) occEl.textContent = String(totalOccurrences);
+        if (algoEl) algoEl.textContent = algorithms.join(', ');
+        if (timeEl) timeEl.textContent = `${totalExecTime.toFixed(2)}ms`;
+        if (badgeEl) badgeEl.textContent = algorithms[0] || '-';
 
     } else {
         if (keywordEl) keywordEl.textContent = '-';
         if (occEl) occEl.textContent = '-';
+        if (algoEl) algoEl.textContent = '-';
         if (timeEl) timeEl.textContent = '-';
         if (badgeEl) badgeEl.textContent = '-';
     }
-    
-    // Position the popup near the cursor with some offset
+
     popup.style.left = `${e.clientX + 18}px`;
     popup.style.top = `${e.clientY + 18}px`;
     popup.style.opacity = '1';
