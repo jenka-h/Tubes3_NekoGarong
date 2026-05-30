@@ -48,10 +48,6 @@ export function createHover(): HTMLDivElement {
                     <span class="jv-occurrences">-</span>
                 </div>
                 <div style="display: flex; justify-content: space-between; gap: 8px;">
-                    <span style="color: #888;">Comparisons</span>
-                    <span class="jv-comparisons">-</span>
-                </div>
-                <div style="display: flex; justify-content: space-between; gap: 8px;">
                     <span style="color: #888;">Execution Time</span>
                     <span style="font-family: monospace;" class="jv-time">-</span>
                 </div>
