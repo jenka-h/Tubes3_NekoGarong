@@ -50,7 +50,15 @@ chrome.storage.local.get(["autoScan"], (result) => {
         if (!hoverPopup) {
             hoverPopup = createHover();
         }
-        asyncScan(algorithm, useBlur, useOcr);
+        asyncScan(algorithm, useBlur, useOcr).then((statistic) => {
+            const methodResultsObj = Object.fromEntries(statistic.methodResults);
+            chrome.storage.local.set({
+                lastStatistic: {
+                    ...statistic,
+                    methodResults: methodResultsObj
+                }
+            });
+        });
     }
 });
 
@@ -78,8 +86,8 @@ chrome.runtime.onMessage.addListener((msg: Message, _sender, sendResponse) => {
     return true;
 });
 
-async function asyncScan(algorithm: string, blur: boolean, ocr: boolean) {
-    runScan(algorithm, blur, ocr);
+async function asyncScan(algorithm: string, blur: boolean, ocr: boolean): Promise<ScanStatistic> {
+    return runScan(algorithm, blur, ocr);
 }
 
 /**
