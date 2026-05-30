@@ -14,6 +14,7 @@ const canvas = document.getElementById("keywords-chart") as HTMLCanvasElement | 
 const scanButton = document.getElementById("scan-button");
 const blurCheckbox = document.getElementById("blur") as HTMLInputElement | null;
 const clearButton = document.getElementById("clear-button");
+const scanIndicator = document.getElementById("scanning-indicator")
 
 if (status) {
     status.textContent = "Extension ready to use ദ്ദി(• ⩊ •マ";
@@ -64,6 +65,10 @@ if (canvas) {
     keywordsChart = new Chart(canvas, config);
 }
 
+if (scanIndicator) {
+    scanIndicator.style.display = "none";
+}
+
 // Load last saved statistic on popup open
 chrome.storage.local.get(['lastStatistic'], (result) => {
     const saved = result?.lastStatistic;
@@ -87,6 +92,9 @@ if (scanButton && selectAlgorithm && status) {
             const activeTab = tabs[0];
             if (!activeTab?.id) return;
 
+            if (scanIndicator) {
+                scanIndicator.style.display = "flex";
+            }
             chrome.tabs.sendMessage(activeTab.id, {
                 type: "scan",
                 algorithm: selectAlgorithm.value
@@ -103,13 +111,16 @@ if (scanButton && selectAlgorithm && status) {
                 statistic = normalizeStatistic(statistic);
                 updateStatistic(statistic);
                 const methodResultsObj = Object.fromEntries(statistic.methodResults);
-                chrome.storage.local.set({ 
+                chrome.storage.local.set({
                     lastStatistic: {
                         ...statistic,
                         methodResults: methodResultsObj
-                    } 
+                    }
                 });
                 console.log("Scan completed.");
+                if (scanIndicator) {
+                    scanIndicator.style.display = "none";
+                }
             });
         });
         status.textContent = "Extension ready to use ദ്ദി(• ⩊ •マ";
@@ -137,7 +148,7 @@ if (clearButton) {
             if (!activeTab?.id) return;
 
             chrome.tabs.sendMessage(activeTab.id, { type: "clear" }, (response) => {
-                if(response) {
+                if (response) {
                     console.log("Highlight cleared.");
                 }
             });
