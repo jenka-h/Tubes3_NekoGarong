@@ -197,17 +197,15 @@ function ahoCorasick(input: string, patterns: string[]): Map<string, number[]> {
 
     for (let i = 0, now: AhoCorasickTrie | undefined = trie; i < input.length; i++) {
         now = now?.getNext(input[i]);
-        if (now?.word != undefined) {
-            let temp: AhoCorasickTrie | undefined = now;
-            while (temp?.word != undefined) {
-                if (!result.has(temp?.word)) {
-                    result.set(temp?.word, [i - temp?.word.length + 1]);
-                }
-                else {
-                    result.get(temp?.word)?.push(i - temp?.word.length + 1);
-                }
-                temp = temp?.getLink();
+        let temp: AhoCorasickTrie | undefined = now;
+        while (temp?.word != undefined) {
+            if (!result.has(temp?.word)) {
+                result.set(temp?.word, [i - temp?.word.length + 1]);
             }
+            else {
+                result.get(temp?.word)?.push(i - temp?.word.length + 1);
+            }
+            temp = temp?.getLink();
         }
     }
 
