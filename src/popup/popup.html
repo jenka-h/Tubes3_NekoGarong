@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8" />
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+  <link rel="stylesheet" href="../style.css" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>tubes3-nekogarong</title>
+</head>
+<body>
+  <h1> Judol Detector <span id="version"> v1.0.0 </span> </h1>
+  <div id="status">
+    Loading...
+  </div>
+
+  <div class="container">
+
+    <div class="column" id="column-left">
+      <label for="algorithm">Select algorithm for pattern matching</label>
+      <select name="algorithm" id="algorithm">
+        <option value="KMP">Knuth-Morris-Pratt</option>
+        <option value="BM">Boyer Moore</option>
+        <option value="AC">Aho-Corasick</option>
+        <option value="RK">Rabin Karp</option>
+      </select>
+
+      <label class="switch" for="blur">
+        <input type="checkbox" name="blur" id="blur">
+        <span class="slider round"></span>
+        <span class="switch-label">Blur detected content</span>
+      </label>
+
+      <label class="switch" for="ocr">
+        <input type="checkbox" name="ocr" id="ocr">
+        <span class="slider round"></span>
+        <span class="switch-label">Censor images with detected content</span>
+      </label>
+
+      <label class="switch" for="scan">
+        <input type="checkbox" name="scan" id="scan">
+        <span class="slider round"></span>
+        <span class="switch-label">Auto scan</span>
+      </label>
+
+      <button id="scan-button">Scan</button>
+      <button id="clear-button">Clear</button>
+      <div id="scanning-indicator" style="display: flex;">
+        <img height="20px" src="/images/loading.gif" style="margin-top: auto;  margin-bottom: auto;">
+        <div>
+          <p style="margin-left: 5px;">Scanning...</p>
+          <p style="margin-left: 5px;">Do not close this extension or switch tab.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="column" id="column-center">
+      <h2> Algorithm Used </h2>
+      <div class="statistics" id="algorithm-used"> (not run yet) </div>
+      <h2> Total Keywords </h2>
+      <div class="statistics" id="total-keywords">
+        0 keywords found
+      </div>
+
+      <h2> Execution Time </h2>
+      <div class="statistics" id="execution-time">
+        Exact Matching: 0 ms<br>
+        RegEx Matching: 0 ms<br>
+        Fuzzy Matching: 0 ms
+      </div>
+
+      <h2> Keywords Match </h2>
+      <div class="statistics" id="match">
+        Exact Matching: 0 keywords<br>
+        RegEx Matching: 0 keywords<br>
+        Fuzzy Matching: 0 keywords
+      </div>
+    </div>
+    
+    <div class="column" id="column-right">
+      <h2> Keywords Found Comparison </h2>
+      <label for="top-keywords-count" class="top-keywords-label">
+        Top
+        <input id="top-keywords-count" type="number" min="1" value="10">
+      </label>
+      <div id="chart-container">
+        <canvas id="keywords-chart"></canvas>
+      </div>
+    </div>
+    
+  </div>
+
+  <script type="module" src="./popup.ts"></script>
+</body>
+</html>
