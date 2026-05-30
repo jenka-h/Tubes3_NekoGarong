@@ -15,9 +15,44 @@ import { applyAllHighlights, clearHighlights } from './content/highlight';
 import { recognizeImage, coverImage, removeCoverImage } from "./content/ocr";
 
 // Global state
+let algorithm: string = "KMP";
+let useBlur: boolean = false;
+let useOcr: boolean = false;
 let elementMatches: ElementMatchResult[] = [];
 let hoverPopup: HTMLDivElement | null = null;
 const semanticMatches = new Map<HTMLElement, ElementMatchResult[]>();
+
+chrome.storage.local.get(["algorithm"], (result) => {
+    const saved = result?.algorithm;
+    if (saved) {
+        algorithm = saved as string;
+    }
+});
+
+chrome.storage.local.get(["useBlur"], (result) => {
+    const saved = result?.useBlur;
+    if (saved != undefined && saved == true) {
+        useBlur = true;
+    }
+});
+
+
+chrome.storage.local.get(["useOcr"], (result) => {
+    const saved = result?.useOcr;
+    if (saved != undefined && saved == true) {
+        useOcr = true;
+    }
+});
+
+chrome.storage.local.get(["autoScan"], (result) => {
+    const saved = result?.autoScan;
+    if (saved != undefined && saved == true) {
+        if (!hoverPopup) {
+            hoverPopup = createHover();
+        }
+        asyncScan(algorithm, useBlur, useOcr);
+    }
+});
 
 chrome.runtime.onMessage.addListener((msg: Message, _sender, sendResponse) => {
     if (msg.type === 'scan') {
@@ -42,6 +77,10 @@ chrome.runtime.onMessage.addListener((msg: Message, _sender, sendResponse) => {
     }
     return true;
 });
+
+async function asyncScan(algorithm: string, blur: boolean, ocr: boolean) {
+    runScan(algorithm, blur, ocr);
+}
 
 /**
  * Main Pipeline
@@ -111,7 +150,7 @@ async function runOcrScan(algorithm: string): Promise<void> {
 
         const methods = [algorithm, "RGX", "LD"];
         for (const method of methods) {
-            for(const text of texts) {
+            for (const text of texts) {
                 if (analyzeText(text, method)) {
                     coverImage(element, chrome.runtime.getURL("images/mrpeanutsiswatching.png"));
                     break;
@@ -185,10 +224,10 @@ async function fetchAsDataUrl(url: string): Promise<string | null> {
 
         const blob = await res.blob();
         return await new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onload = () => resolve(reader.result as string);
-        reader.onerror = () => reject(reader.error);
-        reader.readAsDataURL(blob);
+            const reader = new FileReader();
+            reader.onload = () => resolve(reader.result as string);
+            reader.onerror = () => reject(reader.error);
+            reader.readAsDataURL(blob);
         });
     } catch {
         return null;

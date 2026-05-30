@@ -12,11 +12,11 @@ const status = document.getElementById("status");
 const selectAlgorithm = document.getElementById("algorithm") as HTMLSelectElement | null;;
 const canvas = document.getElementById("keywords-chart") as HTMLCanvasElement | null;
 const scanButton = document.getElementById("scan-button");
-const blurCheckbox = document.getElementById("blur") as HTMLInputElement | null;
 const clearButton = document.getElementById("clear-button");
 const scanIndicator = document.getElementById("scanning-indicator");
 const blurSwitch = document.getElementById("blur") as HTMLInputElement | null;
 const ocrSwitch = document.getElementById("ocr") as HTMLInputElement | null;
+const scanSwitch = document.getElementById("scan") as HTMLInputElement | null;
 const topKeywordsInput = document.getElementById("top-keywords-count") as HTMLInputElement | null;
 
 let lastStatistic: ScanStatistic | null = null;
@@ -90,6 +90,34 @@ chrome.storage.local.get(["topKeywordsLimit"], (result) => {
     }
 });
 
+chrome.storage.local.get(["algorithm"], (result) => {
+    const saved = result?.algorithm;
+    if (saved && selectAlgorithm) {
+        selectAlgorithm.value = saved as string;
+    }
+});
+
+chrome.storage.local.get(["useBlur"], (result) => {
+    const saved = result?.useBlur;
+    if (saved != undefined && blurSwitch) {
+        blurSwitch.checked = saved as boolean;
+    }
+});
+
+chrome.storage.local.get(["useOcr"], (result) => {
+    const saved = result?.useOcr;
+    if (saved != undefined && ocrSwitch) {
+        ocrSwitch.checked = saved as boolean;
+    }
+});
+
+chrome.storage.local.get(["autoScan"], (result) => {
+    const saved = result?.autoScan;
+    if (saved != undefined && scanSwitch) {
+        scanSwitch.checked = saved as boolean;
+    }
+});
+
 if (topKeywordsInput) {
     topKeywordsInput.addEventListener("input", () => {
         const value = Number(topKeywordsInput.value);
@@ -142,16 +170,42 @@ if (scanButton && selectAlgorithm && blurSwitch && ocrSwitch) {
     });
 }
 
-if (blurCheckbox) {
-    blurCheckbox.addEventListener("click", () => {
+if (selectAlgorithm) {
+    selectAlgorithm.addEventListener("change", () => {
         chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
             const activeTab = tabs[0];
             if (!activeTab?.id) return;
+            chrome.storage.local.set({ algorithm: selectAlgorithm.value });
+        });
+    })
+}
 
-            chrome.tabs.sendMessage(activeTab.id, {
-                type: "toggleBlur",
-                payload: blurCheckbox.checked
-            });
+if (blurSwitch) {
+    blurSwitch.addEventListener("click", () => {
+        chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+            const activeTab = tabs[0];
+            if (!activeTab?.id) return;
+            chrome.storage.local.set({ useBlur: blurSwitch.checked });
+        });
+    })
+}
+
+if (ocrSwitch) {
+    ocrSwitch.addEventListener("click", () => {
+        chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+            const activeTab = tabs[0];
+            if (!activeTab?.id) return;
+            chrome.storage.local.set({ useOcr: ocrSwitch.checked });
+        });
+    })
+}
+
+if (scanSwitch) {
+    scanSwitch.addEventListener("click", () => {
+        chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+            const activeTab = tabs[0];
+            if (!activeTab?.id) return;
+            chrome.storage.local.set({ autoScan: scanSwitch.checked });
         });
     })
 }

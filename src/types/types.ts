@@ -14,8 +14,7 @@ export interface TextNodeData {
 export type MessageType =
     | "scan"
     | "clear"
-    | "getStats"
-    | "toggleBlur";
+    | "getStats";
 
 export type Algorithm =
     | "KMP"
@@ -30,6 +29,7 @@ export interface Message {
     algorithm: Algorithm;
     blur: boolean;
     ocr: boolean;
+    toggle: boolean;
 }
 
 
