@@ -5,6 +5,7 @@ export function exactMatching(input: string, method: string): StringMatchResult 
     let matchPosition = new Map<string, number[]>();
     if (method == MatchMethod.KMP) {
         let inputModified = keywordUtils.cleanAccent(input);
+        inputModified = keywordUtils.normalizeString(inputModified);
         keywordUtils.keywords.forEach((keyword) => {
             const x = knuthMorrisPratt(inputModified, keyword);
             if (x.length > 0) {
@@ -43,7 +44,8 @@ export function exactMatching(input: string, method: string): StringMatchResult 
         });
     }
     else if (method == MatchMethod.RGX) {
-        const x = regexMatch(input);
+        let inputModified = keywordUtils.cleanAccent(input);
+        const x = regexMatch(inputModified);
         x.forEach((v, k) => {
             if (v.length > 0) {
                 matchPosition.set(k, v);
@@ -54,6 +56,8 @@ export function exactMatching(input: string, method: string): StringMatchResult 
 }
 
 function knuthMorrisPratt(input: string, pattern: string): number[] {
+    let inputChars = Array.from(input);
+
     // Compute border function
     let borderFunction = [0];
     for (let i = 1, j = 0; i < pattern.length; i++) {
@@ -66,11 +70,11 @@ function knuthMorrisPratt(input: string, pattern: string): number[] {
 
     // Check all occurence
     let result = [];
-    for (let i = 0, j = 0; i < input.length; i++) {
-        if (j > 0 && input[i] != pattern[j]) {
+    for (let i = 0, j = 0; i < inputChars.length; i++) {
+        if (j > 0 && inputChars[i] != pattern[j]) {
             j = borderFunction[j - 1];
         }
-        if (keywordUtils.isCharEqual(input[i], pattern[j])) j++;
+        if (keywordUtils.isCharEqual(inputChars[i], pattern[j])) j++;
         if (j == pattern.length) {
             j = borderFunction[j - 1];
             result.push(i - pattern.length + 1);
@@ -80,6 +84,8 @@ function knuthMorrisPratt(input: string, pattern: string): number[] {
 }
 
 function boyerMoore(input: string, pattern: string): number[] {
+    let inputChars = Array.from(input);
+
     let lastOccurence: Map<string, number> = new Map();
     for (let i = 0; i < pattern.length; i++) {
         lastOccurence.set(pattern[i], i);
@@ -87,25 +93,25 @@ function boyerMoore(input: string, pattern: string): number[] {
 
     let result = [];
     let offset = 0;
-    while (offset <= input.length - pattern.length) {
+    while (offset <= inputChars.length - pattern.length) {
         let i = pattern.length - 1;
 
-        while (i >= 0 && input[offset + i] == pattern[i]) {
+        while (i >= 0 && inputChars[offset + i] == pattern[i]) {
             i--;
         }
 
         if (i < 0) {
             result.push(offset);
-            let j = lastOccurence.get(input[offset + i]);
+            let j = lastOccurence.get(inputChars[offset + i]);
             if (j != undefined) {
-                offset += (offset + pattern.length < input.length) ? pattern.length - j : 1;
+                offset += (offset + pattern.length < inputChars.length) ? pattern.length - j : 1;
             }
             else {
                 offset++;
             }
         }
         else {
-            let j = lastOccurence.get(input[offset + i]);
+            let j = lastOccurence.get(inputChars[offset + i]);
             if (j != undefined) {
                 offset += Math.max(1, i - j);
             }
@@ -195,10 +201,10 @@ function ahoCorasick(input: string, patterns: string[]): Map<string, number[]> {
             let temp: AhoCorasickTrie | undefined = now;
             while (temp?.word != undefined) {
                 if (!result.has(temp?.word)) {
-                    result.set(temp?.word, [i]);
+                    result.set(temp?.word, [i - temp?.word.length + 1]);
                 }
                 else {
-                    result.get(temp?.word)?.push(i);
+                    result.get(temp?.word)?.push(i - temp?.word.length + 1);
                 }
                 temp = temp?.getLink();
             }
@@ -262,7 +268,7 @@ function regexMatch(input: string): Map<string, number[]> {
 }
 
 export function fuzzyMacthing(input: string): StringMatchResult {
-    input = keywordUtils.normalizeString(input);
+    input = keywordUtils.cleanAccent(input);
     let matchPosition = new Map<string, number[]>();
     keywordUtils.keywords.forEach((keyword) => {
         const x = levenshteinDistance(input, keyword, 0.2);
@@ -275,36 +281,31 @@ export function fuzzyMacthing(input: string): StringMatchResult {
 
 function levenshteinDistance(input: string, pattern: string, errorPecentage: number): number[] {
     let resultDistance: number[] = [];
-    let maxDistance = Math.round(errorPecentage * pattern.length);
+    let maxDistance = pattern.length <= 3 ? 0 : errorPecentage * pattern.length;
     for (let a = 0; a < input.length; a++) {
         let minDistance = maxDistance + 1;
-        for (let b = a + 1; b <= input.length && b <= a + pattern.length + maxDistance; b++) {
-            let substr = input.substring(a, b);
-            let distance: number[][] = [];
-            for (let i = 0; i <= substr.length; i++) {
-                distance.push([]);
-                for (let j = 0; j <= pattern.length; j++) {
-                    if (i == 0) {
-                        distance[i].push(j);
-                    }
-                    else if (j == 0) {
-                        distance[i].push(i);
-                    }
-                    else if (substr[i - 1] == pattern[j - 1]) {
-                        distance[i].push(distance[i - 1][j - 1]);
-                    }
-                    else {
-                        distance[i].push(1 + Math.min(distance[i - 1][j], distance[i][j - 1], distance[i - 1][j - 1]))
-                    }
+        let distance: number[][] = [];
+        for (let i = 0; i <= input.length - a; i++) {
+            distance.push([]);
+            for (let j = 0; j <= pattern.length; j++) {
+                if (i == 0) {
+                    distance[i].push(j);
+                }
+                else if (j == 0) {
+                    distance[i].push(i);
+                }
+                else if (input[i - 1 + a] == pattern[j - 1]) {
+                    distance[i].push(Math.min(0.6 + distance[i - 1][j], 0.8 + distance[i][j - 1], distance[i - 1][j - 1]));
+                }
+                else {
+                    distance[i].push(Math.min(0.6 + distance[i - 1][j], 0.8 + distance[i][j - 1], 1 + distance[i - 1][j - 1]))
                 }
             }
-            if (distance[substr.length][pattern.length] <= maxDistance) {
-                minDistance = Math.min(minDistance, distance[substr.length][pattern.length]);
-            }
+            minDistance = Math.min(minDistance, distance[i][pattern.length]);
+            if (distance[i][pattern.length] > pattern.length) break;
         }
         resultDistance.push(minDistance);
     }
-
     let result: number[] = [];
     for (let i = 0; i < resultDistance.length; i++) {
         if (resultDistance[i] > maxDistance) continue;
