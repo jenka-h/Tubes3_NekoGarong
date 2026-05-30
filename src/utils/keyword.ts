@@ -193,7 +193,6 @@ export function searchLookalike(char: string) {
             }
         }
     });
-    if (isSpace(char)) result = " ";
     return result;
 }
 
