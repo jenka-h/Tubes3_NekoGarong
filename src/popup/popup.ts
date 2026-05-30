@@ -12,7 +12,14 @@ const status = document.getElementById("status");
 const selectAlgorithm = document.getElementById("algorithm") as HTMLSelectElement | null;;
 const canvas = document.getElementById("keywords-chart") as HTMLCanvasElement | null;
 const scanButton = document.getElementById("scan-button");
+const blurCheckbox = document.getElementById("blur") as HTMLInputElement | null;
 const clearButton = document.getElementById("clear-button");
+const scanIndicator = document.getElementById("scanning-indicator");
+const blurSwitch = document.getElementById("blur") as HTMLInputElement | null;
+const ocrSwitch = document.getElementById("ocr") as HTMLInputElement | null;
+const topKeywordsInput = document.getElementById("top-keywords-count") as HTMLInputElement | null;
+
+let lastStatistic: ScanStatistic | null = null;
 
 if (status) {
     status.textContent = "Extension ready to use ദ്ദി(• ⩊ •マ";
@@ -20,18 +27,18 @@ if (status) {
 
 const labels = ["none", "nothing", "no", "empty"];
 const data = {
-  labels: labels,
-  datasets: [{
-    axis: 'y',
-    data: [100, 90, 230, 30],
-    fill: false,
-    backgroundColor: accentBg,
-    borderColor: accentBorder,
-    borderWidth: 1
-  }]
+    labels: labels,
+    datasets: [{
+        axis: 'y',
+        data: [100, 90, 230, 30],
+        fill: false,
+        backgroundColor: accentBg,
+        borderColor: accentBorder,
+        borderWidth: 1
+    }]
 };
 
-const config:ChartConfiguration<"bar", number[], string> = {
+const config: ChartConfiguration<"bar", number[], string> = {
     type: 'bar',
     data: data,
     options: {
@@ -63,41 +70,90 @@ if (canvas) {
     keywordsChart = new Chart(canvas, config);
 }
 
+if (scanIndicator) {
+    scanIndicator.style.display = "none";
+}
+
 // Load last saved statistic on popup open
 chrome.storage.local.get(['lastStatistic'], (result) => {
     const saved = result?.lastStatistic;
     if (!saved) return;
     const statistic = normalizeStatistic(saved);
+    lastStatistic = statistic;
     updateStatistic(statistic);
 });
 
-if (scanButton && selectAlgorithm && status) {
+chrome.storage.local.get(["topKeywordsLimit"], (result) => {
+    const saved = result?.topKeywordsLimit;
+    if (topKeywordsInput) {
+        topKeywordsInput.value = String(saved ?? 10);
+    }
+});
+
+if (topKeywordsInput) {
+    topKeywordsInput.addEventListener("input", () => {
+        const value = Number(topKeywordsInput.value);
+        topKeywordsInput.value = String(value);
+        chrome.storage.local.set({ topKeywordsLimit: value });
+        if (lastStatistic) updateStatistic(lastStatistic);
+    });
+}
+
+if (scanButton && selectAlgorithm && blurSwitch && ocrSwitch) {
     scanButton.addEventListener("click", () => {
-        status.textContent = "Loading...";
         chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
             const activeTab = tabs[0];
             if (!activeTab?.id) return;
 
+            if (scanIndicator) {
+                scanIndicator.style.display = "flex";
+            }
             chrome.tabs.sendMessage(activeTab.id, {
                 type: "scan",
-                algorithm: selectAlgorithm.value
+                algorithm: selectAlgorithm.value,
+                blur: blurSwitch.checked,
+                ocr: ocrSwitch.checked
             }, (response) => {
                 if (chrome.runtime.lastError) {
                     console.warn(chrome.runtime.lastError.message);
                     return;
                 }
+                if (!response) {
+                    console.log("Failed to get scan statistic.");
+                }
 
-                if (!response) return;
-
-                console.log("Response:", response.success);
                 let statistic: ScanStatistic = response.statistic;
                 statistic = normalizeStatistic(statistic);
+                lastStatistic = statistic;
                 updateStatistic(statistic);
-                chrome.storage.local.set({ lastStatistic: statistic });
+                const methodResultsObj = Object.fromEntries(statistic.methodResults);
+                chrome.storage.local.set({
+                    lastStatistic: {
+                        ...statistic,
+                        methodResults: methodResultsObj
+                    }
+                });
+                console.log("Scan completed.");
+                if (scanIndicator) {
+                    scanIndicator.style.display = "none";
+                }
             });
         });
-        status.textContent = "Extension ready to use ദ്ദി(• ⩊ •マ";
     });
+}
+
+if (blurCheckbox) {
+    blurCheckbox.addEventListener("click", () => {
+        chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+            const activeTab = tabs[0];
+            if (!activeTab?.id) return;
+
+            chrome.tabs.sendMessage(activeTab.id, {
+                type: "toggleBlur",
+                payload: blurCheckbox.checked
+            });
+        });
+    })
 }
 
 if (clearButton) {
@@ -107,7 +163,9 @@ if (clearButton) {
             if (!activeTab?.id) return;
 
             chrome.tabs.sendMessage(activeTab.id, { type: "clear" }, (response) => {
-                console.log("Response:", response);
+                if (response) {
+                    console.log("Highlight cleared.");
+                }
             });
         });
     });
@@ -148,13 +206,13 @@ function updateStatistic(statistic: ScanStatistic): void {
     const regexTime = regexRes ? regexRes.executionTime.toFixed(2) : '0.00';
     const fuzzyTime = fuzzyRes ? fuzzyRes.executionTime.toFixed(2) : '0.00';
     if (executionTimeEl) executionTimeEl.innerHTML =
-        `Pattern Matching: ${patternTime} ms<br>RegEx Matching: ${regexTime} ms<br>Fuzzy Matching: ${fuzzyTime} ms`;
+        `Exact Matching: ${patternTime} ms<br>RegEx Matching: ${regexTime} ms<br>Fuzzy Matching: ${fuzzyTime} ms`;
 
     const patternCount = patternRes ? patternRes.comparisonCount : 0;
     const regexCount = regexRes ? regexRes.comparisonCount : 0;
     const fuzzyCount = fuzzyRes ? fuzzyRes.comparisonCount : 0;
     if (matchEl) matchEl.innerHTML =
-        `Pattern Matching: ${patternCount} keywords<br>RegEx Matching: ${regexCount} keywords<br>Fuzzy Matching: ${fuzzyCount} keywords`;
+        `Exact Matching: ${patternCount} keywords<br>RegEx Matching: ${regexCount} keywords<br>Fuzzy Matching: ${fuzzyCount} keywords`;
 
     if (keywordsChart) {
         if (statistic.topKeywords && statistic.topKeywords.length > 0) {
@@ -172,6 +230,15 @@ function updateStatistic(statistic: ScanStatistic): void {
         }
         keywordsChart.update();
     }
+
+    const limit = topKeywordsInput ? Number(topKeywordsInput.value || 10) : 10;
+    const topList = (statistic.topKeywords || []).slice(0, limit);
+
+    const labels = topList.map(k => k.keyword);
+    const dataVals = topList.map(k => k.count);
+    keywordsChart.data.labels = labels;
+    keywordsChart.data.datasets[0].data = dataVals;
+    keywordsChart.update();
 }
 
 function normalizeStatistic(raw: any): ScanStatistic {

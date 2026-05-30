@@ -56,3 +56,28 @@ export function extractTextNodes(): TextNodeData[] {
 
     return results;
 }
+
+export interface ImageTarget {
+  element: HTMLImageElement;
+  src: string;
+}
+
+export function extractImages(): ImageTarget[] {
+    const images = Array.from(document.images);
+    return images
+        .filter(img => img.src && img.complete && img.naturalWidth > 0)
+        .map(img => ({ element: img, src: img.currentSrc || img.src }))
+        .filter(({ src }) => {
+            if (!src) return false;
+            // Allow data URLs or http/https for fetch, not blobs
+            if (src.startsWith("data:image/")) {
+                return src.startsWith("data:image/png")
+                    || src.startsWith("data:image/jpeg")
+                    || src.startsWith("data:image/jpg")
+                    || src.startsWith("data:image/webp")
+                    || src.startsWith("data:image/bmp")
+                    || src.startsWith("data:image/gif");
+            }
+            return src.startsWith("http://") || src.startsWith("https://");
+        });
+}

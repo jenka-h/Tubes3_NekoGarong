@@ -28,7 +28,8 @@ export type Algorithm =
 export interface Message {
     type: MessageType;
     algorithm: Algorithm;
-    payload?: any;
+    blur: boolean;
+    ocr: boolean;
 }
 
 
