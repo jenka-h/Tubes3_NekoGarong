@@ -4,29 +4,51 @@ import { StringMatchResult, MatchMethod } from "./string-match-result"
 export function exactMatching(input: string, method: string): StringMatchResult {
     let matchPosition = new Map<string, number[]>();
     if (method == MatchMethod.KMP) {
-        input = keywordUtils.cleanAccent(input);
+        let inputModified = keywordUtils.cleanAccent(input);
         keywordUtils.keywords.forEach((keyword) => {
-            matchPosition.set(keyword, knuthMorrisPratt(input, keyword));
+            const x = knuthMorrisPratt(inputModified, keyword);
+            if (x.length > 0) {
+                matchPosition.set(keyword, x);
+            }
         });
     }
     else if (method == MatchMethod.BM) {
-        input = keywordUtils.normalizeString(input);
+        let inputModified = keywordUtils.cleanAccent(input);
+        inputModified = keywordUtils.normalizeString(inputModified);
         keywordUtils.keywords.forEach((keyword) => {
-            matchPosition.set(keyword, boyerMoore(input, keyword));
+            const x = boyerMoore(inputModified, keyword);
+            if (x.length > 0) {
+                matchPosition.set(keyword, x);
+            }
         });
     }
     else if (method == MatchMethod.AC) {
-        input = keywordUtils.normalizeString(input);
-        matchPosition = ahoCorasick(input, keywordUtils.keywords);
+        let inputModified = keywordUtils.cleanAccent(input);
+        inputModified = keywordUtils.normalizeString(inputModified);
+        const x = ahoCorasick(inputModified, keywordUtils.keywords);
+        x.forEach((v, k) => {
+            if (v.length > 0) {
+                matchPosition.set(k, v);
+            }
+        });
     }
     else if (method == MatchMethod.RK) {
-        input = keywordUtils.normalizeString(input);
+        let inputModified = keywordUtils.cleanAccent(input);
+        inputModified = keywordUtils.normalizeString(inputModified);
         keywordUtils.keywords.forEach((keyword) => {
-            matchPosition.set(keyword, rabinKarp(input, keyword));
+            const x = rabinKarp(inputModified, keyword);
+            if (x.length > 0) {
+                matchPosition.set(keyword, x);
+            }
         });
     }
     else if (method == MatchMethod.RGX) {
-        matchPosition = regexMatch(input);
+        const x = regexMatch(input);
+        x.forEach((v, k) => {
+            if (v.length > 0) {
+                matchPosition.set(k, v);
+            }
+        });
     }
     return new StringMatchResult(method, input, matchPosition);
 }
@@ -243,7 +265,10 @@ export function fuzzyMacthing(input: string): StringMatchResult {
     input = keywordUtils.normalizeString(input);
     let matchPosition = new Map<string, number[]>();
     keywordUtils.keywords.forEach((keyword) => {
-        matchPosition.set(keyword, levenshteinDistance(input, keyword, 0.2));
+        const x = levenshteinDistance(input, keyword, 0.2);
+        if (x.length > 0) {
+            matchPosition.set(keyword, x);
+        }
     });
     return new StringMatchResult(MatchMethod.LD, input, matchPosition);
 }

@@ -2,15 +2,20 @@
   "manifest_version": 3,
   "name": "Judol Detector",
   "version": "1.0.0",
-  "permissions": ["storage"],
-  "host_permissions": ["<all_urls>"],
+  "description": "Pembasmian judol >:)",
+  "permissions": ["storage", "tabs", "activeTab"],
+  "background": {
+    "service_worker": "src/background.ts",
+    "type": "module"
+  },
   "action": {
-    "default_popup": "popup.html"
+    "default_popup": "src/popup/popup.html"
   },
   "content_scripts": [
     {
       "matches": ["<all_urls>"],
-      "js": ["src/content/content.js"]
+      "js": ["src/content.ts"],
+      "run_at": "document_idle"
     }
   ]
 }
