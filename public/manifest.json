@@ -17,5 +17,11 @@
       "js": ["src/content.ts"],
       "run_at": "document_idle"
     }
+  ],
+  "web_accessible_resources": [
+    {
+      "resources": ["images/mrpeanutsiswatching.png"],
+      "matches": ["<all_urls>"]
+    }
   ]
 }

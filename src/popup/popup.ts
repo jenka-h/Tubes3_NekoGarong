@@ -86,14 +86,21 @@ if (scanButton && selectAlgorithm && status) {
                     console.warn(chrome.runtime.lastError.message);
                     return;
                 }
+                if (!response) {
+                    console.log("Failed to get scan statistic.");
+                }
 
-                if (!response) return;
-
-                console.log("Response:", response.success);
                 let statistic: ScanStatistic = response.statistic;
                 statistic = normalizeStatistic(statistic);
                 updateStatistic(statistic);
-                chrome.storage.local.set({ lastStatistic: statistic });
+                const methodResultsObj = Object.fromEntries(statistic.methodResults);
+                chrome.storage.local.set({ 
+                    lastStatistic: {
+                        ...statistic,
+                        methodResults: methodResultsObj
+                    } 
+                });
+                console.log("Scan completed.");
             });
         });
         status.textContent = "Extension ready to use ദ്ദി(• ⩊ •マ";
@@ -107,7 +114,9 @@ if (clearButton) {
             if (!activeTab?.id) return;
 
             chrome.tabs.sendMessage(activeTab.id, { type: "clear" }, (response) => {
-                console.log("Response:", response);
+                if(response) {
+                    console.log("Highlight cleared.");
+                }
             });
         });
     });
@@ -148,13 +157,13 @@ function updateStatistic(statistic: ScanStatistic): void {
     const regexTime = regexRes ? regexRes.executionTime.toFixed(2) : '0.00';
     const fuzzyTime = fuzzyRes ? fuzzyRes.executionTime.toFixed(2) : '0.00';
     if (executionTimeEl) executionTimeEl.innerHTML =
-        `Pattern Matching: ${patternTime} ms<br>RegEx Matching: ${regexTime} ms<br>Fuzzy Matching: ${fuzzyTime} ms`;
+        `Exact Matching: ${patternTime} ms<br>RegEx Matching: ${regexTime} ms<br>Fuzzy Matching: ${fuzzyTime} ms`;
 
     const patternCount = patternRes ? patternRes.comparisonCount : 0;
     const regexCount = regexRes ? regexRes.comparisonCount : 0;
     const fuzzyCount = fuzzyRes ? fuzzyRes.comparisonCount : 0;
     if (matchEl) matchEl.innerHTML =
-        `Pattern Matching: ${patternCount} keywords<br>RegEx Matching: ${regexCount} keywords<br>Fuzzy Matching: ${fuzzyCount} keywords`;
+        `Exact Matching: ${patternCount} keywords<br>RegEx Matching: ${regexCount} keywords<br>Fuzzy Matching: ${fuzzyCount} keywords`;
 
     if (keywordsChart) {
         if (statistic.topKeywords && statistic.topKeywords.length > 0) {
