@@ -12,21 +12,19 @@ import { ElementMatchResult } from './types/types';
 import { createHover } from './content/hover';
 import { addMatchToSemanticContainer, attachSemanticListeners } from './content/semantic';
 import { applyAllHighlights, clearHighlights } from './content/highlight';
-import { recognizeImage, coverImage } from "./content/ocr";
+import { recognizeImage, coverImage, removeCoverImage } from "./content/ocr";
 
 // Global state
-let useBlur: boolean = false;
 let elementMatches: ElementMatchResult[] = [];
 let hoverPopup: HTMLDivElement | null = null;
 const semanticMatches = new Map<HTMLElement, ElementMatchResult[]>();
 
-// CEK LAGIIII !!!!! done i think
 chrome.runtime.onMessage.addListener((msg: Message, _sender, sendResponse) => {
     if (msg.type === 'scan') {
         if (!hoverPopup) {
             hoverPopup = createHover();
         }
-        const statistic = runScan(msg.algorithm);
+        const statistic = runScan(msg.algorithm, msg.blur, msg.ocr);
         const methodResultsObj = Object.fromEntries(statistic.methodResults);
         sendResponse({
             success: true,
@@ -37,13 +35,7 @@ chrome.runtime.onMessage.addListener((msg: Message, _sender, sendResponse) => {
         });
     }
     else if (msg.type === 'clear') {
-        clearHighlights();
-        sendResponse({
-            success: true,
-        });
-    }
-    else if (msg.type === 'toggleBlur') {
-        toggleBlur(msg.payload);
+        clear();
         sendResponse({
             success: true,
         });
@@ -54,8 +46,8 @@ chrome.runtime.onMessage.addListener((msg: Message, _sender, sendResponse) => {
 /**
  * Main Pipeline
  */
-function runScan(algorithm: string): ScanStatistic {
-    clearHighlights();
+function runScan(algorithm: string, blur: boolean, ocr: boolean): ScanStatistic {
+    clear();
     elementMatches = [];
     const textNodes = extractTextNodes();
     semanticMatches.clear();  // Clear old mappings on rescans
@@ -75,7 +67,7 @@ function runScan(algorithm: string): ScanStatistic {
                 elementMatches.push(elemMatch);
                 count += elemMatch.result.totalMatch();
 
-                // accumulate keyword counts for top keywords
+                // accumulate keyword counts
                 elemMatch.result.matchPosition.forEach((positions, keyword) => {
                     const prev = keywordCounts.get(keyword) || 0;
                     keywordCounts.set(keyword, prev + positions.length);
@@ -91,15 +83,14 @@ function runScan(algorithm: string): ScanStatistic {
         statistic.totalMatches += count;
     }
 
-    applyAllHighlights(elementMatches, useBlur);
+    applyAllHighlights(elementMatches, blur);
     attachSemanticListeners(semanticMatches, hoverPopup);
     const top = Array.from(keywordCounts.entries())
         .sort((a, b) => b[1] - a[1])
-        .slice(0, 10) // get top 10 keywords
         .map(([keyword, count]) => ({ keyword, count }));
     statistic.topKeywords = top;
 
-    runOcrScan(algorithm);
+    if (ocr) runOcrScan(algorithm);
 
     return statistic;
 }
@@ -130,7 +121,11 @@ async function runOcrScan(algorithm: string): Promise<void> {
     }
 }
 
-// Ini gatau better taruh mana
+function clear(): void {
+    clearHighlights();
+    removeCoverImage();
+}
+
 // Analyze a single text node with all algorithms and return the first match result found
 function analyzeTextNode(textNode: TextNodeData, methodChoice: string): ElementMatchResult | null {
     const { originalText } = textNode;
@@ -227,8 +222,4 @@ function analyzeText(text: string, methodChoice: string): boolean {
     }
 
     return false;
-}
-
-function toggleBlur(blur: boolean) {
-    useBlur = blur;
 }

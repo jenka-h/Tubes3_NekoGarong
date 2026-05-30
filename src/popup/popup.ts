@@ -14,7 +14,9 @@ const canvas = document.getElementById("keywords-chart") as HTMLCanvasElement | 
 const scanButton = document.getElementById("scan-button");
 const blurCheckbox = document.getElementById("blur") as HTMLInputElement | null;
 const clearButton = document.getElementById("clear-button");
-const scanIndicator = document.getElementById("scanning-indicator")
+const scanIndicator = document.getElementById("scanning-indicator");
+const blurSwitch = document.getElementById("blur") as HTMLInputElement | null;
+const ocrSwitch = document.getElementById("ocr") as HTMLInputElement | null;
 
 if (status) {
     status.textContent = "Extension ready to use ദ്ദി(• ⩊ •マ";
@@ -85,9 +87,8 @@ chrome.storage.local.get(['useBlur'], (result) => {
     }
 });
 
-if (scanButton && selectAlgorithm && status) {
+if (scanButton && selectAlgorithm && blurSwitch && ocrSwitch) {
     scanButton.addEventListener("click", () => {
-        status.textContent = "Loading...";
         chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
             const activeTab = tabs[0];
             if (!activeTab?.id) return;
@@ -97,7 +98,9 @@ if (scanButton && selectAlgorithm && status) {
             }
             chrome.tabs.sendMessage(activeTab.id, {
                 type: "scan",
-                algorithm: selectAlgorithm.value
+                algorithm: selectAlgorithm.value,
+                blur: blurSwitch.checked,
+                ocr: ocrSwitch.checked
             }, (response) => {
                 if (chrome.runtime.lastError) {
                     console.warn(chrome.runtime.lastError.message);
@@ -123,7 +126,6 @@ if (scanButton && selectAlgorithm && status) {
                 }
             });
         });
-        status.textContent = "Extension ready to use ദ്ദി(• ⩊ •マ";
     });
 }
 

@@ -29,3 +29,7 @@ export function coverImage(target: HTMLImageElement, coverSrc: string): void {
 
     parent.appendChild(overlay);
 }
+
+export function removeCoverImage(): void {
+    document.querySelectorAll('img[data-judol-cover="true"]').forEach(el => el.remove());
+}

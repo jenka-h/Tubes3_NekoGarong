@@ -30,6 +30,12 @@
         <span class="switch-label">Blur detected content</span>
       </label>
 
+      <label class="switch" for="ocr">
+        <input type="checkbox" name="ocr" id="ocr">
+        <span class="slider round"></span>
+        <span class="switch-label">Censor images with detected content</span>
+      </label>
+
       <button id="scan-button">Scan</button>
       <button id="clear-button">Clear</button>
       <div id="scanning-indicator" style="display: flex;">
@@ -63,6 +69,10 @@
     
     <div class="column" id="column-right">
       <h2> Keywords Found Comparison </h2>
+      <label for="top-keywords-count" class="top-keywords-label">
+        Top
+        <input id="top-keywords-count" type="number" min="1" max="50" value="10">
+      </label>
       <div id="chart-container">
         <canvas id="keywords-chart"></canvas>
       </div>
