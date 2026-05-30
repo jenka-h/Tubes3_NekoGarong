@@ -17,6 +17,9 @@ const clearButton = document.getElementById("clear-button");
 const scanIndicator = document.getElementById("scanning-indicator");
 const blurSwitch = document.getElementById("blur") as HTMLInputElement | null;
 const ocrSwitch = document.getElementById("ocr") as HTMLInputElement | null;
+const topKeywordsInput = document.getElementById("top-keywords-count") as HTMLInputElement | null;
+
+let lastStatistic: ScanStatistic | null = null;
 
 if (status) {
     status.textContent = "Extension ready to use ദ്ദി(• ⩊ •マ";
@@ -76,16 +79,25 @@ chrome.storage.local.get(['lastStatistic'], (result) => {
     const saved = result?.lastStatistic;
     if (!saved) return;
     const statistic = normalizeStatistic(saved);
+    lastStatistic = statistic;
     updateStatistic(statistic);
 });
 
-chrome.storage.local.get(['useBlur'], (result) => {
-    const saved = result?.useBlur;
-    if (saved == undefined) return;
-    if (blurCheckbox) {
-        blurCheckbox.checked = saved as boolean;
+chrome.storage.local.get(["topKeywordsLimit"], (result) => {
+    const saved = result?.topKeywordsLimit;
+    if (topKeywordsInput) {
+        topKeywordsInput.value = String(saved ?? 10);
     }
 });
+
+if (topKeywordsInput) {
+    topKeywordsInput.addEventListener("input", () => {
+        const value = Number(topKeywordsInput.value);
+        topKeywordsInput.value = String(value);
+        chrome.storage.local.set({ topKeywordsLimit: value });
+        if (lastStatistic) updateStatistic(lastStatistic);
+    });
+}
 
 if (scanButton && selectAlgorithm && blurSwitch && ocrSwitch) {
     scanButton.addEventListener("click", () => {
@@ -112,6 +124,7 @@ if (scanButton && selectAlgorithm && blurSwitch && ocrSwitch) {
 
                 let statistic: ScanStatistic = response.statistic;
                 statistic = normalizeStatistic(statistic);
+                lastStatistic = statistic;
                 updateStatistic(statistic);
                 const methodResultsObj = Object.fromEntries(statistic.methodResults);
                 chrome.storage.local.set({
@@ -217,6 +230,15 @@ function updateStatistic(statistic: ScanStatistic): void {
         }
         keywordsChart.update();
     }
+
+    const limit = topKeywordsInput ? Number(topKeywordsInput.value || 10) : 10;
+    const topList = (statistic.topKeywords || []).slice(0, limit);
+
+    const labels = topList.map(k => k.keyword);
+    const dataVals = topList.map(k => k.count);
+    keywordsChart.data.labels = labels;
+    keywordsChart.data.datasets[0].data = dataVals;
+    keywordsChart.update();
 }
 
 function normalizeStatistic(raw: any): ScanStatistic {
