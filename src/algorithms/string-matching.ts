@@ -294,11 +294,11 @@ function levenshteinDistance(input: string, pattern: string, errorPecentage: num
                 else if (j == 0) {
                     distance[i].push(i);
                 }
-                else if (input[i - 1 + a] == pattern[j - 1]) {
-                    distance[i].push(Math.min(0.6 + distance[i - 1][j], 0.8 + distance[i][j - 1], distance[i - 1][j - 1]));
-                }
                 else {
-                    distance[i].push(Math.min(0.6 + distance[i - 1][j], 0.8 + distance[i][j - 1], 1 + distance[i - 1][j - 1]))
+                    let v1 = input[i - 1 + a] == " " ? 0.1 : 0.8;
+                    let v2 = pattern[j - 1] == " " ? 0.1 : 0.6;
+                    let v3 = input[i - 1 + a] == pattern[j - 1] ? 0 : 1;
+                    distance[i].push(Math.min(v2 + distance[i - 1][j], v1 + distance[i][j - 1], v3 + distance[i - 1][j - 1]));
                 }
             }
             minDistance = Math.min(minDistance, distance[i][pattern.length]);

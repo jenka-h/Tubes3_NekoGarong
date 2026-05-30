@@ -109,8 +109,40 @@ export const otherLookalike = {
     "y": ["ϕ"],
     "Y": ["Ψ", "ψ", "ϒ", "ϔ", "ϓ"],
     "z": [],
-    "Z": []
+    "Z": [],
 };
+
+export const spaceLookalike = [
+    " ",
+    "-",
+    "_",
+    "\r",
+    "\t",
+    "\u0020",
+    "\u00A0",
+    "\u180E",
+    "\u2000",
+    "\u2001",
+    "\u2002",
+    "\u2003",
+    "\u2004",
+    "\u2005",
+    "\u2006",
+    "\u2007",
+    "\u2008",
+    "\u2009",
+    "\u200A",
+    "\u200B",
+    "\u200C",
+    "\u200D",
+    "\u202F",
+    "\u205F",
+    "\u2060",
+    "\u2800",
+    "\u3000",
+    "\u3164",
+    "\uFEFF",
+];
 
 export const normalCharMap: { [k: string]: string[] } = {};
 
@@ -161,7 +193,12 @@ export function searchLookalike(char: string) {
             }
         }
     });
+    if (isSpace(char)) result = " ";
     return result;
+}
+
+export function isSpace(char: string): boolean {
+    return spaceLookalike.findIndex(v => v == char) != -1;
 }
 
 export function normalizeString(str: string) {
