@@ -10,11 +10,12 @@ import { extractTextNodes, extractImages } from './content/extractor';
 import { type TextNodeData, type Message, ScanStatistic, MethodResult } from './types/types';
 import { ElementMatchResult } from './types/types';
 import { createHover } from './content/hover';
-import { addMatchToSemanticContainer, attachSemanticListeners} from './content/semantic';
+import { addMatchToSemanticContainer, attachSemanticListeners } from './content/semantic';
 import { applyAllHighlights, clearHighlights } from './content/highlight';
 import { recognizeImage, coverImage } from "./content/ocr";
 
 // Global state
+let useBlur: boolean = false;
 let elementMatches: ElementMatchResult[] = [];
 let hoverPopup: HTMLDivElement | null = null;
 const semanticMatches = new Map<HTMLElement, ElementMatchResult[]>();
@@ -27,7 +28,7 @@ chrome.runtime.onMessage.addListener((msg: Message, _sender, sendResponse) => {
         }
         const statistic = runScan(msg.algorithm);
         const methodResultsObj = Object.fromEntries(statistic.methodResults);
-        sendResponse({ 
+        sendResponse({
             success: true,
             statistic: {
                 ...statistic,
@@ -37,7 +38,13 @@ chrome.runtime.onMessage.addListener((msg: Message, _sender, sendResponse) => {
     }
     else if (msg.type === 'clear') {
         clearHighlights();
-        sendResponse({ 
+        sendResponse({
+            success: true,
+        });
+    }
+    else if (msg.type === 'toggleBlur') {
+        toggleBlur(msg.payload);
+        sendResponse({
             success: true,
         });
     }
@@ -84,7 +91,7 @@ function runScan(algorithm: string): ScanStatistic {
         statistic.totalMatches += count;
     }
 
-    applyAllHighlights(elementMatches);
+    applyAllHighlights(elementMatches, useBlur);
     attachSemanticListeners(semanticMatches, hoverPopup);
     const top = Array.from(keywordCounts.entries())
         .sort((a, b) => b[1] - a[1])
@@ -150,7 +157,7 @@ function analyzeTextNode(textNode: TextNodeData, methodChoice: string): ElementM
 
 function algCodeToString(alg: string): string {
     switch (alg) {
-        case "KMP": 
+        case "KMP":
             return MatchMethod.KMP;
         case "BM":
             return MatchMethod.BM;
@@ -220,4 +227,8 @@ function analyzeText(text: string, methodChoice: string): boolean {
     }
 
     return false;
+}
+
+function toggleBlur(blur: boolean) {
+    useBlur = blur;
 }

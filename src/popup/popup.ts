@@ -12,6 +12,7 @@ const status = document.getElementById("status");
 const selectAlgorithm = document.getElementById("algorithm") as HTMLSelectElement | null;;
 const canvas = document.getElementById("keywords-chart") as HTMLCanvasElement | null;
 const scanButton = document.getElementById("scan-button");
+const blurCheckbox = document.getElementById("blur") as HTMLInputElement | null;
 const clearButton = document.getElementById("clear-button");
 
 if (status) {
@@ -20,18 +21,18 @@ if (status) {
 
 const labels = ["none", "nothing", "no", "empty"];
 const data = {
-  labels: labels,
-  datasets: [{
-    axis: 'y',
-    data: [100, 90, 230, 30],
-    fill: false,
-    backgroundColor: accentBg,
-    borderColor: accentBorder,
-    borderWidth: 1
-  }]
+    labels: labels,
+    datasets: [{
+        axis: 'y',
+        data: [100, 90, 230, 30],
+        fill: false,
+        backgroundColor: accentBg,
+        borderColor: accentBorder,
+        borderWidth: 1
+    }]
 };
 
-const config:ChartConfiguration<"bar", number[], string> = {
+const config: ChartConfiguration<"bar", number[], string> = {
     type: 'bar',
     data: data,
     options: {
@@ -71,6 +72,14 @@ chrome.storage.local.get(['lastStatistic'], (result) => {
     updateStatistic(statistic);
 });
 
+chrome.storage.local.get(['useBlur'], (result) => {
+    const saved = result?.useBlur;
+    if (saved == undefined) return;
+    if (blurCheckbox) {
+        blurCheckbox.checked = saved as boolean;
+    }
+});
+
 if (scanButton && selectAlgorithm && status) {
     scanButton.addEventListener("click", () => {
         status.textContent = "Loading...";
@@ -105,6 +114,20 @@ if (scanButton && selectAlgorithm && status) {
         });
         status.textContent = "Extension ready to use ദ്ദി(• ⩊ •マ";
     });
+}
+
+if (blurCheckbox) {
+    blurCheckbox.addEventListener("click", () => {
+        chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+            const activeTab = tabs[0];
+            if (!activeTab?.id) return;
+
+            chrome.tabs.sendMessage(activeTab.id, {
+                type: "toggleBlur",
+                payload: blurCheckbox.checked
+            });
+        });
+    })
 }
 
 if (clearButton) {

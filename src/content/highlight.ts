@@ -1,14 +1,14 @@
 import { ElementMatchResult } from '../types/types';
 import type { Range } from '../types/types';
 
-export function applyAllHighlights(elementMatches: ElementMatchResult[]): void {
+export function applyAllHighlights(elementMatches: ElementMatchResult[], useBlur: boolean = false): void {
     clearHighlights();
     for (const elemMatch of elementMatches) {
-        applyHighlight(elemMatch);
+        applyHighlight(elemMatch, useBlur);
     }
 }
 
-export function applyHighlight(elemMatch: ElementMatchResult): void {
+export function applyHighlight(elemMatch: ElementMatchResult, useBlur: boolean = false): void {
     const { node } = elemMatch;
     const currentText = node.textContent || '';
 
@@ -26,9 +26,9 @@ export function applyHighlight(elemMatch: ElementMatchResult): void {
     );
 
     if (validHighlights.length === 0) return;
-    
+
     // Start building fragmennttttttttt
-    const frag = buildHighlightFragment(currentText, validHighlights);
+    const frag = buildHighlightFragment(currentText, validHighlights, useBlur);
     const parent = node.parentNode;
     if (parent) {
         parent.replaceChild(frag, node);
@@ -65,7 +65,7 @@ function mergeOverlappingRanges(ranges: Range[]): Range[] {
 
 function buildHighlightRanges(result: ElementMatchResult): Range[] {
     const ranges: Range[] = [];
-    
+
     // Create again [This might cause overhead: beware of malicious intention :shockface:]
     result.result.matchPosition.forEach((positions, keyword) => {
         for (const pos of positions) {
@@ -80,7 +80,7 @@ function buildHighlightRanges(result: ElementMatchResult): Range[] {
     return mergeOverlappingRanges(ranges);
 }
 
-function buildHighlightFragment( originalText: string, highlights: Range[]): DocumentFragment {
+function buildHighlightFragment(originalText: string, highlights: Range[], useBlur: boolean = false): DocumentFragment {
     const frag = document.createDocumentFragment();
     let lastEnd = 0;
 
@@ -96,7 +96,7 @@ function buildHighlightFragment( originalText: string, highlights: Range[]): Doc
             continue;
         }
 
-        const mark = createHighlightMark();
+        const mark = createHighlightMark(useBlur);
         mark.textContent = originalText.slice(h.start, h.end);
         frag.appendChild(mark);
 
@@ -113,19 +113,36 @@ function buildHighlightFragment( originalText: string, highlights: Range[]): Doc
     return frag;
 }
 
-export function createHighlightMark(): HTMLElement {
+export function createHighlightMark(useBlur: boolean = false): HTMLElement {
     const mark = document.createElement('mark');
-    mark.style.cssText = `
-        background: rgba(168, 85, 247, 0.25);
-        color: inherit;
-        display: inline;
-        line-height: inherit;
-        font-size: inherit;
-        font-weight: inherit;
-        border-radius: 2px;
-        box-decoration-break: clone;
-        -webkit-box-decoration-break: clone;
-    `;
+    if (!useBlur) {
+        mark.style.cssText = `
+            background: rgba(168, 85, 247, 0.25);
+            color: inherit;
+            display: inline;
+            line-height: inherit;
+            font-size: inherit;
+            font-weight: inherit;
+            border-radius: 2px;
+            box-decoration-break: clone;
+            -webkit-box-decoration-break: clone;
+        `;
+    }
+    else {
+        mark.style.cssText = `
+            background: rgba(168, 85, 247, 0.25);
+            color: inherit;
+            display: inline;
+            line-height: inherit;
+            font-size: inherit;
+            font-weight: inherit;
+            border-radius: 2px;
+            box-decoration-break: clone;
+            -webkit-box-decoration-break: clone;
+            filter: blur(5px);
+        `;
+    }
+
     return mark;
 }
 
